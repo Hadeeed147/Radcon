@@ -52,6 +52,10 @@ const config: Config = {
       animation: {
         wave: "wave 4s ease-out infinite",
         glow: "glow 3s ease-in-out infinite",
+        "gradient-x": "gradient-x 3s ease infinite",
+        "pulse-energy": "pulse-energy 2s ease-in-out infinite",
+        breathing: "breathing 3s ease-in-out infinite",
+        "liquid-flow": "liquid-flow 3s ease-in-out infinite",
       },
       keyframes: {
         wave: {
@@ -72,10 +76,33 @@ const config: Config = {
             textShadow: "0 0 30px rgba(0, 255, 255, 0.6), 0 0 40px rgba(0, 255, 255, 0.4)",
           },
         },
+        "gradient-x": {
+          "0%, 100%": { "background-position": "0% 50%" },
+          "50%": { "background-position": "100% 50%" },
+        },
+        "pulse-energy": {
+          "0%, 100%": {
+            "text-shadow": "0 0 10px rgba(0, 255, 255, 0.5), 0 0 20px rgba(0, 255, 255, 0.3)",
+            transform: "scale(1)",
+          },
+          "50%": {
+            "text-shadow":
+              "0 0 20px rgba(0, 255, 255, 0.8), 0 0 30px rgba(0, 255, 255, 0.5), 0 0 40px rgba(0, 255, 255, 0.3)",
+            transform: "scale(1.02)",
+          },
+        },
+        breathing: {
+          "0%, 100%": { opacity: "0", transform: "scale(1)" },
+          "50%": { opacity: "1", transform: "scale(1.1)" },
+        },
+        "liquid-flow": {
+          "0%, 100%": { "background-position": "0% 50%" },
+          "50%": { "background-position": "100% 50%" },
+        },
       },
     },
   },
-  plugins: [],
+  plugins: [require("tailwindcss-animate")],
 }
 
-export default config 
+export default config

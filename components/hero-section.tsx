@@ -1,4 +1,3 @@
-/* hero-section */
 "use client"
 
 import { Button } from "@/components/ui/button"
@@ -86,7 +85,8 @@ export default function HeroSection() {
 
   return (
     <section
-      className="relative min-h-screen w-full overflow-hidden flex flex-col justify-center items-center px-4 sm:px-6 lg:px-8"
+      id="home"
+      className="relative min-h-screen w-full overflow-hidden flex flex-col justify-center items-center px-4 sm:px-6 lg:px-8 pt-20"
       style={{
         backgroundImage: "url('/images/hero-section-banner.jpg')",
         backgroundSize: "cover",
@@ -169,7 +169,7 @@ export default function HeroSection() {
 
         {/* CTA Button */}
         <Button
-          className="mb-20 sm:mb-16 py-4 px-8 rounded-full border-2 border-cyan-400 bg-transparent text-cyan-400 hover:bg-cyan-400 hover:text-black transition-all duration-300 text-base font-medium"
+          className="mb-32 sm:mb-24 md:mb-20 py-4 px-8 rounded-full border-2 border-cyan-400 bg-transparent text-cyan-400 hover:bg-cyan-400 hover:text-black transition-all duration-300 text-base font-medium"
           variant="outline"
         >
           Explore Solutions
