@@ -16,7 +16,7 @@ export default function Navigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [activeItem, setActiveItem] = useState("Home")
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
-  const { scrollDirection, isVisible, scrollY } = useScrollDirection()
+  const {isVisible, scrollY } = useScrollDirection()
   const navRef = useRef<HTMLElement>(null)
 
   // Mouse tracking for spotlight effect
@@ -127,13 +127,20 @@ export default function Navigation() {
             <div className="pl-6 cursor-pointer group relative overflow-hidden" onClick={scrollToTop}>
               {/* Particle effects background */}
               <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                {[...Array(6)].map((_, i) => (
+                {[
+                  { left: 10, top: 20 },
+                  { left: 80, top: 15 },
+                  { left: 25, top: 70 },
+                  { left: 60, top: 40 },
+                  { left: 90, top: 60 },
+                  { left: 40, top: 85 }
+                ].map((pos, i) => (
                   <div
                     key={i}
                     className="absolute w-1 h-1 bg-cyan-400 rounded-full animate-ping"
                     style={{
-                      left: `${Math.random() * 100}%`,
-                      top: `${Math.random() * 100}%`,
+                      left: `${pos.left}%`,
+                      top: `${pos.top}%`,
                       animationDelay: `${i * 0.2}s`,
                       animationDuration: "2s",
                     }}
@@ -165,7 +172,7 @@ export default function Navigation() {
 
             {/* Enhanced Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-8">
-              {navItems.map((item, index) => (
+              {navItems.map((item) => (
                 <button
                   key={item.name}
                   onClick={() => handleNavClick(item.name)}
