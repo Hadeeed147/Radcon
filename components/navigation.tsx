@@ -75,7 +75,7 @@ export default function Navigation() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
   const {isVisible, scrollY } = useScrollDirection()
   const navRef = useRef<HTMLElement>(null)
-  const dropdownTimeoutRef = useRef<NodeJS.Timeout>()
+  const dropdownTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // Mouse tracking for spotlight effect
   useEffect(() => {
