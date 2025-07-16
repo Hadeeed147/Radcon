@@ -72,6 +72,7 @@ export default function Navigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [activeItem, setActiveItem] = useState("Corporate")
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null)
+  const [activeMobileDropdown, setActiveMobileDropdown] = useState<string | null>(null)
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
   const {isVisible, scrollY } = useScrollDirection()
   const navRef = useRef<HTMLElement>(null)
@@ -101,14 +102,15 @@ export default function Navigation() {
     const handleClickOutside = () => {
       if (isMenuOpen) setIsMenuOpen(false)
       setActiveDropdown(null)
+      setActiveMobileDropdown(null)
     }
 
-    if (isMenuOpen || activeDropdown) {
+    if (isMenuOpen || activeDropdown || activeMobileDropdown) {
       document.addEventListener("click", handleClickOutside)
     }
 
     return () => document.removeEventListener("click", handleClickOutside)
-  }, [isMenuOpen, activeDropdown])
+  }, [isMenuOpen, activeDropdown, activeMobileDropdown])
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" })
@@ -119,6 +121,7 @@ export default function Navigation() {
     setActiveItem(item)
     setIsMenuOpen(false)
     setActiveDropdown(null)
+    setActiveMobileDropdown(null)
 
     if (href) {
       const element = document.querySelector(href)
@@ -135,6 +138,10 @@ export default function Navigation() {
       clearTimeout(dropdownTimeoutRef.current)
     }
     setActiveDropdown(itemName)
+  }
+
+  const handleMobileDropdownToggle = (itemName: string) => {
+    setActiveMobileDropdown(activeMobileDropdown === itemName ? null : itemName)
   }
 
   const handleDropdownLeave = () => {
@@ -407,9 +414,15 @@ export default function Navigation() {
               return (
                 <div key={item.name}>
                   <button
-                    onClick={() => handleNavClick(item.name, item.href)}
+                    onClick={() => {
+                      if (item.hasDropdown) {
+                        handleMobileDropdownToggle(item.name)
+                      } else {
+                        handleNavClick(item.name, item.href)
+                      }
+                    }}
                     className={`w-full text-left p-4 rounded-xl transition-all duration-300 transform hover:scale-105 group relative overflow-hidden ${
-                      activeItem === item.name
+                      activeItem === item.name || activeMobileDropdown === item.name
                         ? "text-cyan-400 bg-cyan-400/10 border border-cyan-400/30"
                         : "text-gray-300 hover:text-cyan-400 hover:bg-cyan-400/5"
                     }`}
@@ -419,9 +432,65 @@ export default function Navigation() {
                         <Icon className="w-5 h-5" />
                         <span className="font-medium">{item.name}</span>
                       </div>
-                      {item.hasDropdown && <ChevronDown className="w-4 h-4" />}
+                      {item.hasDropdown && (
+                        <ChevronDown 
+                          className={`w-4 h-4 transition-transform duration-300 ${
+                            activeMobileDropdown === item.name ? "rotate-180" : ""
+                          }`} 
+                        />
+                      )}
                     </div>
                   </button>
+
+                  {/* Mobile Dropdown Content */}
+                  {item.hasDropdown && activeMobileDropdown === item.name && (
+                    <div
+                      className={`mt-2 ml-4 space-y-2 transition-all duration-300 transform ${
+                        activeMobileDropdown === item.name ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2"
+                      }`}
+                    >
+                      {item.isMegaMenu ? (
+                        // Mobile Mega Menu for Capabilities
+                        <div className="space-y-4">
+                          {item.megaMenuData?.domains.map((domain) => {
+                            const DomainIcon = domain.icon
+                            return (
+                              <div key={domain.title} className="bg-cyan-400/5 rounded-lg p-3 border border-cyan-400/20">
+                                <div className="flex items-center space-x-2 mb-2">
+                                  <DomainIcon className="w-4 h-4 text-cyan-400" />
+                                  <h4 className="text-sm font-semibold text-cyan-400">{domain.title}</h4>
+                                </div>
+                                <div className="space-y-1">
+                                  {domain.solutions.map((solution) => (
+                                    <button
+                                      key={solution}
+                                      onClick={() => handleNavClick(solution)}
+                                      className="block w-full text-left text-xs text-gray-400 hover:text-cyan-300 py-1 px-2 rounded transition-colors duration-200"
+                                    >
+                                      {solution}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      ) : (
+                        // Regular Mobile Dropdown
+                        <div className="space-y-1">
+                          {item.dropdownItems?.map((dropdownItem) => (
+                            <button
+                              key={dropdownItem.name}
+                              onClick={() => handleNavClick(dropdownItem.name, dropdownItem.href)}
+                              className="block w-full text-left p-3 rounded-lg text-gray-400 hover:text-cyan-400 hover:bg-cyan-400/5 transition-all duration-200 text-sm"
+                            >
+                              {dropdownItem.name}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )
             })}
