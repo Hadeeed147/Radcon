@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { Home, Cog, Cpu, User, Mail, ChevronDown, Zap, Settings, Wrench, Activity } from "lucide-react"
+import { Cog, Cpu, User, Mail, ChevronDown, Zap, Settings, Wrench, Activity } from "lucide-react"
 import { useScrollDirection } from "../hooks/use-scroll-direction"
 
 const navItems = [
@@ -75,7 +75,7 @@ export default function Navigation() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
   const {isVisible, scrollY } = useScrollDirection()
   const navRef = useRef<HTMLElement>(null)
-  const dropdownTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const dropdownTimeoutRef = useRef<NodeJS.Timeout>()
 
   // Mouse tracking for spotlight effect
   useEffect(() => {
@@ -298,7 +298,7 @@ export default function Navigation() {
                           }}
                         >
                           <div className="grid grid-cols-2 gap-6">
-                            {item.megaMenuData?.domains.map((domain, index) => {
+                            {item.megaMenuData?.domains.map((domain) => {
                               const DomainIcon = domain.icon
                               return (
                                 <div key={domain.title} className="group">
@@ -402,7 +402,7 @@ export default function Navigation() {
           }}
         >
           <div className="px-4 py-6 space-y-2">
-            {navItems.map((item, index) => {
+            {navItems.map((item) => {
               const Icon = item.icon
               return (
                 <div key={item.name}>
