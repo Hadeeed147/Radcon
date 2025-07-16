@@ -97,7 +97,7 @@ export default function Navigation() {
     }
   }, [])
 
-  // Close mobile menu when clicking outside
+  // Close mobile menu when clicking outside and handle body scroll
   useEffect(() => {
     const handleClickOutside = () => {
       if (isMenuOpen) setIsMenuOpen(false)
@@ -109,7 +109,17 @@ export default function Navigation() {
       document.addEventListener("click", handleClickOutside)
     }
 
-    return () => document.removeEventListener("click", handleClickOutside)
+    // Prevent body scroll when mobile menu is open
+    if (isMenuOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = 'unset'
+    }
+
+    return () => {
+      document.removeEventListener("click", handleClickOutside)
+      document.body.style.overflow = 'unset'
+    }
   }, [isMenuOpen, activeDropdown, activeMobileDropdown])
 
   const scrollToTop = () => {
@@ -406,7 +416,11 @@ export default function Navigation() {
             `,
             backdropFilter: "blur(20px)",
             borderBottom: "1px solid rgba(0, 255, 255, 0.3)",
+            maxHeight: "calc(100vh - 80px)",
+            overflowY: "auto",
+            WebkitOverflowScrolling: "touch"
           }}
+          onClick={(e) => e.stopPropagation()}
         >
           <div className="px-4 py-6 space-y-2">
             {navItems.map((item) => {
@@ -448,10 +462,16 @@ export default function Navigation() {
                       className={`mt-2 ml-4 space-y-2 transition-all duration-300 transform ${
                         activeMobileDropdown === item.name ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2"
                       }`}
+                      style={{
+                        maxHeight: item.isMegaMenu ? "400px" : "300px",
+                        overflowY: "auto",
+                        WebkitOverflowScrolling: "touch"
+                      }}
+                      onClick={(e) => e.stopPropagation()}
                     >
                       {item.isMegaMenu ? (
                         // Mobile Mega Menu for Capabilities
-                        <div className="space-y-4">
+                        <div className="space-y-4 pr-2">
                           {item.megaMenuData?.domains.map((domain) => {
                             const DomainIcon = domain.icon
                             return (
@@ -477,7 +497,7 @@ export default function Navigation() {
                         </div>
                       ) : (
                         // Regular Mobile Dropdown
-                        <div className="space-y-1">
+                        <div className="space-y-1 pr-2">
                           {item.dropdownItems?.map((dropdownItem) => (
                             <button
                               key={dropdownItem.name}
