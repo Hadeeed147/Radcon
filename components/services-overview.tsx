@@ -153,24 +153,24 @@ export default function ServicesOverview() {
       <div className="absolute top-1/4 left-1/4 h-48 w-48 sm:h-64 sm:w-64 lg:h-96 lg:w-96 rounded-full bg-gradient-to-r from-blue-500/5 to-purple-500/5 blur-3xl animate-pulse-slow" />
       <div className="absolute bottom-1/4 right-1/4 h-48 w-48 sm:h-64 sm:w-64 lg:h-96 lg:w-96 rounded-full bg-gradient-to-r from-cyan-500/5 to-blue-500/5 blur-3xl animate-pulse-slow-delayed" />
 
-      <div className="relative mx-auto max-w-6xl">
+      <div className="relative w-full max-w-6xl mx-auto">
         {/* Section Header */}
         <div
           ref={headerRef}
-          className="header-section mb-8 sm:mb-12 lg:mb-16 text-center"
+          className="header-section mb-8 sm:mb-12 lg:mb-16 text-center w-full"
         >
           <h2 className="mb-3 sm:mb-4 lg:mb-6 text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold leading-tight">
             <span className="bg-gradient-to-r from-white via-cyan-200 to-cyan-400 bg-clip-text text-transparent">
               Our Core Capabilities
             </span>
           </h2>
-          <p className="text-sm sm:text-base lg:text-lg xl:text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed px-4">
+          <p className="text-sm sm:text-base lg:text-lg xl:text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed px-2 sm:px-4">
             Engineering excellence across critical technology domains
           </p>
         </div>
 
         {/* Services Grid */}
-        <div className="grid gap-4 sm:gap-6 lg:gap-8 grid-cols-1 md:grid-cols-2">
+        <div className="w-full grid gap-4 sm:gap-6 lg:gap-8 grid-cols-1 md:grid-cols-2 justify-items-center md:justify-items-stretch">
           {services.map((service, index) => (
             <ServiceCard key={service.title} service={service} index={index} />
           ))}
