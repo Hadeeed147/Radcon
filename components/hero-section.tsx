@@ -98,54 +98,6 @@ export default function HeroSection() {
       <div className="absolute inset-0 bg-gradient-to-br from-slate-900/70 via-blue-950/70 to-black/70" />
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/20" />
 
-      {/* Animated Signal Waves */}
-      <div className="absolute inset-0 pointer-events-none">
-        {/* Wave 1 */}
-        <div
-          className="absolute rounded-full border-2 border-cyan-400/20 animate-[wave_4s_ease-out_infinite]"
-          style={{
-            top: "65%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            width: "20px",
-            height: "20px",
-          }}
-        />
-        {/* Wave 2 */}
-        <div
-          className="absolute rounded-full border-2 border-cyan-400/25 animate-[wave_4s_ease-out_infinite_1.5s]"
-          style={{
-            top: "65%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            width: "20px",
-            height: "20px",
-          }}
-        />
-        {/* Wave 3 */}
-        <div
-          className="absolute rounded-full border-2 border-cyan-400/20 animate-[wave_4s_ease-out_infinite_3s]"
-          style={{
-            top: "65%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            width: "20px",
-            height: "20px",
-          }}
-        />
-        {/* Wave 4 */}
-        <div
-          className="absolute rounded-full border-2 border-cyan-400/25 animate-[wave_4s_ease-out_infinite_4.5s]"
-          style={{
-            top: "65%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            width: "20px",
-            height: "20px",
-          }}
-        />
-      </div>
-
       {/* Main Content */}
       <div className="relative z-10 text-center max-w-4xl mx-auto">
         {/* Main Heading */}
@@ -211,17 +163,6 @@ export default function HeroSection() {
       <style jsx>{`
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;800;900&family=Oxanium:wght@400;600;700;800&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap');
         
-        @keyframes wave {
-          0% {
-            transform: translate(-50%, -50%) scale(0);
-            opacity: 1;
-          }
-          100% {
-            transform: translate(-50%, -50%) scale(150);
-            opacity: 0;
-          }
-        }
-
         @keyframes glow {
           0%, 100% {
             text-shadow: 0 0 20px rgba(0, 255, 255, 0.3);

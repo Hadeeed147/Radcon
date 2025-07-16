@@ -1,23 +1,81 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { Home, Cog, Cpu, User, Mail } from "lucide-react"
+import { Home, Cog, Cpu, User, Mail, ChevronDown, Zap, Settings, Wrench, Activity } from "lucide-react"
 import { useScrollDirection } from "../hooks/use-scroll-direction"
 
 const navItems = [
-  { name: "Home", icon: Home },
-  { name: "Solutions", icon: Cog },
-  { name: "Technology", icon: Cpu },
-  { name: "About", icon: User },
-  { name: "Contact", icon: Mail },
+  { 
+    name: "Corporate", 
+    icon: User,
+    hasDropdown: true,
+    dropdownItems: [
+      { name: "About Us", href: "#about" },
+      { name: "Vision & Mission", href: "#vision" },
+      { name: "RADCON Ethical Principles", href: "#ethics" }
+    ]
+  },
+  { 
+    name: "Capabilities", 
+    icon: Cog,
+    hasDropdown: true,
+    isMegaMenu: true,
+    megaMenuData: {
+      domains: [
+        {
+          title: "RF & Microwave Systems",
+          icon: Zap,
+          solutions: ["Power Amplifiers", "Filters", "Waveguides", "Communication Systems"]
+        },
+        {
+          title: "Electronic Solutions", 
+          icon: Settings,
+          solutions: ["Signal Processing", "Remote Control Systems", "Wireless Solutions"]
+        },
+        {
+          title: "Embedded Systems",
+          icon: Cpu,
+          solutions: ["Control Systems", "Monitoring Equipment", "Custom Electronics"]
+        },
+        {
+          title: "Precision Engineering",
+          icon: Wrench,
+          solutions: ["CNC Machining", "Mechanical Components", "Custom Fabrication"]
+        }
+      ]
+    }
+  },
+  { 
+    name: "Products", 
+    icon: Activity,
+    hasDropdown: true,
+    dropdownItems: [
+      { name: "VJAM Series", href: "#vjam" },
+      { name: "NG Series", href: "#ng-series" },
+      { name: "Specialized Equipment", href: "#specialized" },
+      { name: "Custom Solutions", href: "#custom" }
+    ]
+  },
+  { 
+    name: "Media", 
+    icon: Mail,
+    hasDropdown: true,
+    dropdownItems: [
+      { name: "News & Updates", href: "#news" },
+      { name: "Image Gallery", href: "#gallery" }
+    ]
+  },
+  { name: "Contact", icon: Mail, href: "#contact" },
 ]
 
 export default function Navigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [activeItem, setActiveItem] = useState("Home")
+  const [activeItem, setActiveItem] = useState("Corporate")
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null)
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
   const {isVisible, scrollY } = useScrollDirection()
   const navRef = useRef<HTMLElement>(null)
+  const dropdownTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // Mouse tracking for spotlight effect
   useEffect(() => {
@@ -42,38 +100,47 @@ export default function Navigation() {
   useEffect(() => {
     const handleClickOutside = () => {
       if (isMenuOpen) setIsMenuOpen(false)
+      setActiveDropdown(null)
     }
 
-    if (isMenuOpen) {
+    if (isMenuOpen || activeDropdown) {
       document.addEventListener("click", handleClickOutside)
     }
 
     return () => document.removeEventListener("click", handleClickOutside)
-  }, [isMenuOpen])
+  }, [isMenuOpen, activeDropdown])
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" })
-    setActiveItem("Home")
-
-    // Trigger wave animation easter egg
-    const waves = document.querySelectorAll('[class*="animate-[wave"]')
-    waves.forEach((wave) => {
-      wave.classList.add("animate-pulse")
-      setTimeout(() => wave.classList.remove("animate-pulse"), 1000)
-    })
+    setActiveItem("Corporate")
   }
 
-  const handleNavClick = (item: string) => {
+  const handleNavClick = (item: string, href?: string) => {
     setActiveItem(item)
     setIsMenuOpen(false)
+    setActiveDropdown(null)
 
-    const sectionId = item.toLowerCase()
-    const element = document.getElementById(sectionId)
-    if (element) {
-      element.scrollIntoView({ behavior: "smooth" })
-    } else if (item === "Home") {
+    if (href) {
+      const element = document.querySelector(href)
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth" })
+      }
+    } else if (item === "Corporate") {
       scrollToTop()
     }
+  }
+
+  const handleDropdownEnter = (itemName: string) => {
+    if (dropdownTimeoutRef.current) {
+      clearTimeout(dropdownTimeoutRef.current)
+    }
+    setActiveDropdown(itemName)
+  }
+
+  const handleDropdownLeave = () => {
+    dropdownTimeoutRef.current = setTimeout(() => {
+      setActiveDropdown(null)
+    }, 150)
   }
 
   const scrollProgress = typeof document !== 'undefined' 
@@ -171,65 +238,120 @@ export default function Navigation() {
             </div>
 
             {/* Enhanced Desktop Navigation */}
-            <div className="hidden md:flex items-center space-x-8">
+            <div className="hidden md:flex items-center space-x-6">
               {navItems.map((item) => (
-                <button
+                <div
                   key={item.name}
-                  onClick={() => handleNavClick(item.name)}
-                  className={`relative text-base font-medium transition-all duration-300 group magnetic-hover ${
-                    activeItem === item.name ? "text-cyan-400" : "text-gray-300"
-                  }`}
-                  style={{
-                    textShadow: activeItem === item.name ? "0 0 10px rgba(0, 255, 255, 0.5)" : "none",
-                    willChange: "transform, color, text-shadow",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = "translateY(-2px) scale(1.05)"
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = "translateY(0) scale(1)"
-                  }}
+                  className="relative"
+                  onMouseEnter={() => item.hasDropdown && handleDropdownEnter(item.name)}
+                  onMouseLeave={() => item.hasDropdown && handleDropdownLeave()}
                 >
-                  {item.name}
-
-                  {/* Liquid gradient underline */}
-                  <span
-                    className={`absolute -bottom-1 left-0 h-0.5 bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500 transition-all duration-500 ${
-                      activeItem === item.name ? "w-full" : "w-0 group-hover:w-full"
+                  <button
+                    onClick={() => handleNavClick(item.name, item.href)}
+                    className={`relative text-base font-medium transition-all duration-300 group magnetic-hover flex items-center space-x-1 ${
+                      activeItem === item.name ? "text-cyan-400" : "text-gray-300"
                     }`}
                     style={{
-                      background:
-                        activeItem === item.name
-                          ? "linear-gradient(90deg, #00ffff, #3b82f6, #9333ea)"
-                          : "linear-gradient(90deg, #00ffff, #3b82f6, #9333ea)",
-                      animation: activeItem === item.name ? "liquid-flow 3s ease-in-out infinite" : "none",
+                      textShadow: activeItem === item.name ? "0 0 10px rgba(0, 255, 255, 0.5)" : "none",
+                      willChange: "transform, color, text-shadow",
                     }}
-                  />
-
-                  {/* Active item corner accents */}
-                  {activeItem === item.name && (
-                    <>
-                      <span className="absolute -top-2 -left-2 w-3 h-3 border-l-2 border-t-2 border-cyan-400 animate-pulse" />
-                      <span className="absolute -top-2 -right-2 w-3 h-3 border-r-2 border-t-2 border-cyan-400 animate-pulse" />
-                      <span className="absolute -bottom-2 -left-2 w-3 h-3 border-l-2 border-b-2 border-cyan-400 animate-pulse" />
-                      <span className="absolute -bottom-2 -right-2 w-3 h-3 border-r-2 border-b-2 border-cyan-400 animate-pulse" />
-                    </>
-                  )}
-
-                  {/* Sound wave animation on hover */}
-                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    {[...Array(3)].map((_, i) => (
-                      <div
-                        key={i}
-                        className="absolute top-1/2 left-1/2 w-1 h-1 bg-cyan-400 rounded-full animate-ping"
-                        style={{
-                          animationDelay: `${i * 0.1}s`,
-                          transform: `translate(-50%, -50%) translateX(${(i - 1) * 10}px)`,
-                        }}
+                  >
+                    <span>{item.name}</span>
+                    {item.hasDropdown && (
+                      <ChevronDown 
+                        className={`w-4 h-4 transition-transform duration-300 ${
+                          activeDropdown === item.name ? "rotate-180" : ""
+                        }`} 
                       />
-                    ))}
-                  </div>
-                </button>
+                    )}
+
+                    {/* Liquid gradient underline */}
+                    <span
+                      className={`absolute -bottom-1 left-0 h-0.5 bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500 transition-all duration-500 ${
+                        activeItem === item.name ? "w-full" : "w-0 group-hover:w-full"
+                      }`}
+                      style={{
+                        background:
+                          activeItem === item.name
+                            ? "linear-gradient(90deg, #00ffff, #3b82f6, #9333ea)"
+                            : "linear-gradient(90deg, #00ffff, #3b82f6, #9333ea)",
+                        animation: activeItem === item.name ? "liquid-flow 3s ease-in-out infinite" : "none",
+                      }}
+                    />
+                  </button>
+
+                  {/* Dropdown Menu */}
+                  {item.hasDropdown && activeDropdown === item.name && (
+                    <div className="absolute top-full left-0 mt-2 z-50">
+                      {item.isMegaMenu ? (
+                        // Mega Menu for Capabilities
+                        <div
+                          className="w-screen max-w-4xl p-6 rounded-xl shadow-2xl border border-cyan-400/30"
+                          style={{
+                            background: `
+                              linear-gradient(135deg, rgba(0, 0, 0, 0.95) 0%, rgba(0, 20, 40, 0.95) 100%),
+                              radial-gradient(circle at 50% 0%, rgba(0, 255, 255, 0.1) 0%, transparent 50%)
+                            `,
+                            backdropFilter: "blur(20px)",
+                            transform: "translateX(-50%)",
+                            left: "50%"
+                          }}
+                        >
+                          <div className="grid grid-cols-2 gap-6">
+                            {item.megaMenuData?.domains.map((domain, index) => {
+                              const DomainIcon = domain.icon
+                              return (
+                                <div key={domain.title} className="group">
+                                  <div className="flex items-center space-x-3 mb-3">
+                                    <DomainIcon className="w-5 h-5 text-cyan-400" />
+                                    <h3 className="text-lg font-semibold text-cyan-400">{domain.title}</h3>
+                                  </div>
+                                  <ul className="space-y-2">
+                                    {domain.solutions.map((solution) => (
+                                      <li key={solution}>
+                                        <button
+                                          onClick={() => handleNavClick(solution)}
+                                          className="text-gray-300 hover:text-cyan-400 transition-colors duration-200 text-sm"
+                                        >
+                                          {solution}
+                                        </button>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      ) : (
+                        // Regular Dropdown
+                        <div
+                          className="w-56 p-4 rounded-xl shadow-2xl border border-cyan-400/30"
+                          style={{
+                            background: `
+                              linear-gradient(135deg, rgba(0, 0, 0, 0.95) 0%, rgba(0, 20, 40, 0.95) 100%),
+                              radial-gradient(circle at 50% 0%, rgba(0, 255, 255, 0.1) 0%, transparent 50%)
+                            `,
+                            backdropFilter: "blur(20px)",
+                          }}
+                        >
+                          <ul className="space-y-2">
+                            {item.dropdownItems?.map((dropdownItem) => (
+                              <li key={dropdownItem.name}>
+                                <button
+                                  onClick={() => handleNavClick(dropdownItem.name, dropdownItem.href)}
+                                  className="w-full text-left p-2 rounded-lg text-gray-300 hover:text-cyan-400 hover:bg-cyan-400/10 transition-all duration-200"
+                                >
+                                  {dropdownItem.name}
+                                </button>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
 
@@ -265,7 +387,7 @@ export default function Navigation() {
           </div>
         </div>
 
-        {/* Revolutionary Mobile Menu */}
+        {/* Mobile Menu */}
         <div
           className={`md:hidden absolute top-full left-0 right-0 transition-all duration-500 transform ${
             isMenuOpen ? "opacity-100 translate-y-0 visible" : "opacity-0 -translate-y-4 invisible"
@@ -283,38 +405,24 @@ export default function Navigation() {
             {navItems.map((item, index) => {
               const Icon = item.icon
               return (
-                <button
-                  key={item.name}
-                  onClick={() => handleNavClick(item.name)}
-                  className={`w-full text-left p-4 rounded-xl transition-all duration-300 transform hover:scale-105 group relative overflow-hidden ${
-                    activeItem === item.name
-                      ? "text-cyan-400 bg-cyan-400/10 border border-cyan-400/30"
-                      : "text-gray-300 hover:text-cyan-400 hover:bg-cyan-400/5"
-                  }`}
-                  style={{
-                    animationDelay: `${index * 0.1}s`,
-                    animation: isMenuOpen ? "cascade-in 0.5s ease-out forwards" : "none",
-                    transform: isMenuOpen ? "translateX(0)" : "translateX(-100px)",
-                    opacity: isMenuOpen ? 1 : 0,
-                  }}
-                >
-                  {/* Glassmorphic card background */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
-                  <div className="flex items-center space-x-4 relative z-10">
-                    <Icon className="w-5 h-5" />
-                    <span className="font-medium">{item.name}</span>
-                  </div>
-
-                  {/* Parallax background effect */}
-                  <div
-                    className="absolute inset-0 opacity-10"
-                    style={{
-                      background: `radial-gradient(circle at ${50 + index * 10}% 50%, rgba(0, 255, 255, 0.1) 0%, transparent 70%)`,
-                      transform: `translateX(${index * 5}px)`,
-                    }}
-                  />
-                </button>
+                <div key={item.name}>
+                  <button
+                    onClick={() => handleNavClick(item.name, item.href)}
+                    className={`w-full text-left p-4 rounded-xl transition-all duration-300 transform hover:scale-105 group relative overflow-hidden ${
+                      activeItem === item.name
+                        ? "text-cyan-400 bg-cyan-400/10 border border-cyan-400/30"
+                        : "text-gray-300 hover:text-cyan-400 hover:bg-cyan-400/5"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between relative z-10">
+                      <div className="flex items-center space-x-4">
+                        <Icon className="w-5 h-5" />
+                        <span className="font-medium">{item.name}</span>
+                      </div>
+                      {item.hasDropdown && <ChevronDown className="w-4 h-4" />}
+                    </div>
+                  </button>
+                </div>
               )
             })}
           </div>
@@ -363,17 +471,6 @@ export default function Navigation() {
         @keyframes grid-move {
           0% { transform: translate(0, 0); }
           100% { transform: translate(20px, 20px); }
-        }
-
-        @keyframes cascade-in {
-          from {
-            opacity: 0;
-            transform: translateX(-100px) translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0) translateY(0);
-          }
         }
 
         .animate-gradient-x {
