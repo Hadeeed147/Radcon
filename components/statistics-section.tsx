@@ -1,7 +1,8 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { Trophy, Rocket, Users, Settings, Target, Zap } from "lucide-react"
+import { Trophy, Rocket, Users, Target, Zap } from "lucide-react"
+import Image from "next/image"
 
 const statistics = [
   {
@@ -115,7 +116,7 @@ const StatItem = ({ stat, index, isMobile = false }: { stat: typeof statistics[0
             />
           </div>
 
-          {/* Value with Odometer Effect */}
+          {/* Value with Odometer Effectss */}
           <div className="mb-1 lg:mb-2">
             <div className="flex items-center justify-center">
               <span className={`
@@ -192,20 +193,26 @@ export default function StatisticsSection() {
       {/* Globe Background - Full Width */}
       <div className="absolute inset-0 flex items-center justify-center">
         {/* Desktop Globe Background */}
-        <div className="hidden lg:block w-full h-full">
-          <img 
+        <div className="hidden lg:block w-full h-full relative">
+          <Image 
             src="/images/globe-desktop.webp" 
             alt="Global Reach"
-            className="w-full h-full object-contain opacity-15"
+            fill
+            className="object-contain opacity-15"
+            sizes="100vw"
+            priority={false}
           />
         </div>
         
         {/* Mobile Globe Background */}
-        <div className="block lg:hidden w-full h-full">
-          <img 
+        <div className="block lg:hidden w-full h-full relative">
+          <Image 
             src="/images/globe-mobile.webp" 
             alt="Global Reach"
-            className="w-full h-full object-contain opacity-15"
+            fill
+            className="object-contain opacity-15"
+            sizes="100vw"
+            priority={false}
           />
         </div>
       </div>
