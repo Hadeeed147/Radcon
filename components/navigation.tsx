@@ -207,7 +207,7 @@ export default function Navigation() {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
           <div className="flex items-center justify-between h-full">
-            {/* Enhanced Logo */}
+            {/* Enhanced Logo with Actual RADCON Image */}
             <div className="pl-6 cursor-pointer group relative overflow-hidden" onClick={scrollToTop}>
               {/* Particle effects background */}
               <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
@@ -232,23 +232,17 @@ export default function Navigation() {
                 ))}
               </div>
 
-              <h1 className="text-2xl font-extrabold relative z-10 transition-all duration-300 group-hover:scale-105">
-                <span
-                  className="bg-gradient-to-r from-white via-cyan-200 to-white bg-clip-text text-transparent animate-gradient-x"
-                  style={{ backgroundSize: "200% 200%" }}
-                >
-                  RAD
-                </span>
-                <span
-                  className="text-cyan-400 animate-pulse-glow"
-                  style={{
-                    textShadow: "0 0 10px rgba(0, 255, 255, 0.5), 0 0 20px rgba(0, 255, 255, 0.3)",
-                    animation: "pulse-energy 2s ease-in-out infinite",
-                  }}
-                >
-                  CON
-                </span>
-              </h1>
+              <div className="relative z-10 transition-all duration-300 group-hover:scale-105">
+                {/* Actual RADCON Logo */}
+                <img 
+                  src="/images/radcon-logo.png" 
+                  alt="RADCON Technologies" 
+                  className="h-16 w-auto filter brightness-0 invert group-hover:drop-shadow-[0_0_15px_rgba(0,255,255,0.6)] transition-all duration-300"
+                />
+                
+                {/* Hidden text for SEO and accessibility */}
+                <span className="sr-only">RADCON Technologies - RF & Microwave Systems</span>
+              </div>
 
               {/* Breathing glow effect */}
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-cyan-400/20 to-transparent opacity-0 group-hover:opacity-100 blur-xl transition-opacity duration-500 animate-breathing" />
