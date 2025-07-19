@@ -1,9 +1,23 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { Zap, Shield, Radio, Target, ChevronRight, BarChart3, Gauge, Antenna, Power } from "lucide-react"
+import { Shield, Radio, ChevronRight, Antenna, Power } from "lucide-react"
 
-const vjamProducts = [
+type VJAMProduct = {
+  id: string
+  name: string
+  model: string
+  power: number
+  antennas: number
+  bands: string[]
+  powerConsumption: string
+  protection: string
+  features: string[]
+  tier: string
+  highlight: boolean
+}
+
+const vjamProducts: VJAMProduct[] = [
   {
     id: "vjam300",
     name: "VJAM 300",
@@ -66,7 +80,7 @@ const vjamProducts = [
   }
 ]
 
-const ProductCard = ({ product, index, isActive, onSelect, isVisible }: { product: any, index: number, isActive: boolean, onSelect: (product: any) => void, isVisible: boolean }) => {
+const ProductCard = ({ product, index, isActive, onSelect, isVisible }: { product: VJAMProduct, index: number, isActive: boolean, onSelect: (product: VJAMProduct) => void, isVisible: boolean }) => {
   const [isHovered, setIsHovered] = useState(false)
   const [animatedPower, setAnimatedPower] = useState(0)
   const [animatedAntennas, setAnimatedAntennas] = useState(0)
