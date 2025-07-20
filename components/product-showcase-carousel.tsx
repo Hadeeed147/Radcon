@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { 
   Shield, 
   Radio, 
@@ -169,6 +169,8 @@ const ProductShowcaseCarousel: React.FC<ProductShowcaseCarouselProps> = ({
   const [velocity, setVelocity] = useState(0)
   const [lastMoveTime, setLastMoveTime] = useState(0)
   const [lastMoveX, setLastMoveX] = useState(0)
+  const [isTouchDevice, setIsTouchDevice] = useState(false)
+  const [isReducedMotion, setIsReducedMotion] = useState(false)
 
   const containerRef = useRef<HTMLDivElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -176,14 +178,27 @@ const ProductShowcaseCarousel: React.FC<ProductShowcaseCarouselProps> = ({
   const animationFrameRef = useRef<number | null>(null)
   const observerRef = useRef<IntersectionObserver | null>(null)
 
+  // Detect touch device and reduced motion preference
+  useEffect(() => {
+    setIsTouchDevice('ontouchstart' in window || navigator.maxTouchPoints > 0)
+    
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
+    setIsReducedMotion(mediaQuery.matches)
+    
+    const handleChange = (e: MediaQueryListEvent) => setIsReducedMotion(e.matches)
+    mediaQuery.addEventListener('change', handleChange)
+    
+    return () => mediaQuery.removeEventListener('change', handleChange)
+  }, [])
+
   // Get current visible cards based on screen size
   const getVisibleCards = useCallback(() => {
     if (typeof window === 'undefined') return visibleCards.desktop
 
     const width = window.innerWidth
-    if (width <= 768) return visibleCards.mobile
-    if (width <= 1024) return visibleCards.tablet  
-    if (width <= 1440) return visibleCards.desktop
+    if (width < 640) return visibleCards.mobile
+    if (width < 1024) return visibleCards.tablet  
+    if (width < 1536) return visibleCards.desktop
     return visibleCards.large
   }, [visibleCards])
 
@@ -196,7 +211,12 @@ const ProductShowcaseCarousel: React.FC<ProductShowcaseCarouselProps> = ({
     const handleResize = () => {
       clearTimeout(timeoutId)
       timeoutId = setTimeout(() => {
-        setVisibleCardsCount(getVisibleCards())
+        const newCount = getVisibleCards()
+        setVisibleCardsCount(newCount)
+        // Adjust current index if needed
+        if (currentIndex > productCategories.length - newCount) {
+          setCurrentIndex(Math.max(0, productCategories.length - newCount))
+        }
       }, 150)
     }
 
@@ -205,7 +225,7 @@ const ProductShowcaseCarousel: React.FC<ProductShowcaseCarouselProps> = ({
       window.removeEventListener('resize', handleResize)
       clearTimeout(timeoutId)
     }
-  }, [getVisibleCards])
+  }, [getVisibleCards, currentIndex])
 
   // Intersection Observer for entrance animations
   useEffect(() => {
@@ -214,7 +234,10 @@ const ProductShowcaseCarousel: React.FC<ProductShowcaseCarouselProps> = ({
         ([entry]) => {
           setIsInView(entry.isIntersecting)
         },
-        { threshold: 0.1 }
+        { 
+          threshold: 0.1,
+          rootMargin: '50px'
+        }
       )
       
       observerRef.current.observe(containerRef.current)
@@ -227,9 +250,40 @@ const ProductShowcaseCarousel: React.FC<ProductShowcaseCarouselProps> = ({
     }
   }, [])
 
+  const nextSlide = useCallback(() => {
+    if (isScrolling) return
+    
+    setIsScrolling(true)
+    const maxIndex = Math.max(0, productCategories.length - visibleCardsCount)
+    const nextIndex = currentIndex >= maxIndex ? 0 : currentIndex + 1
+    setCurrentIndex(nextIndex)
+    
+    setTimeout(() => setIsScrolling(false), 500)
+  }, [currentIndex, visibleCardsCount, isScrolling])
+
+  const prevSlide = useCallback(() => {
+    if (isScrolling) return
+    
+    setIsScrolling(true)
+    const maxIndex = Math.max(0, productCategories.length - visibleCardsCount)
+    const prevIndex = currentIndex === 0 ? maxIndex : currentIndex - 1
+    setCurrentIndex(prevIndex)
+    
+    setTimeout(() => setIsScrolling(false), 500)
+  }, [currentIndex, visibleCardsCount, isScrolling])
+
+  const goToSlide = useCallback((index: number) => {
+    if (isScrolling) return
+    
+    setIsScrolling(true)
+    setCurrentIndex(Math.max(0, Math.min(index, productCategories.length - visibleCardsCount)))
+    
+    setTimeout(() => setIsScrolling(false), 500)
+  }, [visibleCardsCount, isScrolling])
+
   // Auto scroll functionality
   useEffect(() => {
-    if (autoScroll && isInView && !isDragging && !isScrolling) {
+    if (autoScroll && isInView && !isDragging && !isScrolling && !hoveredCard && !isReducedMotion) {
       autoScrollTimeoutRef.current = setTimeout(() => {
         nextSlide()
       }, autoScrollDelay)
@@ -240,13 +294,24 @@ const ProductShowcaseCarousel: React.FC<ProductShowcaseCarouselProps> = ({
         clearTimeout(autoScrollTimeoutRef.current)
       }
     }
-  }, [currentIndex, autoScroll, autoScrollDelay, isInView, isDragging, isScrolling])
+  }, [currentIndex, autoScroll, autoScrollDelay, isInView, isDragging, isScrolling, hoveredCard, isReducedMotion, nextSlide])
+
+  const getCardWidth = useCallback(() => {
+    if (typeof window === 'undefined') return 320
+    
+    const width = window.innerWidth
+    const gap = width < 640 ? 16 : 24
+    
+    if (width < 640) return width - 32 // Full width on mobile with padding
+    if (width < 1024) return 300 + gap
+    return 320 + gap
+  }, [])
 
   // Momentum animation
   useEffect(() => {
-    if (Math.abs(velocity) > 0.1 && !isDragging) {
+    if (Math.abs(velocity) > 0.1 && !isDragging && !isReducedMotion) {
       animationFrameRef.current = requestAnimationFrame(() => {
-        const newVelocity = velocity * 0.95 // Friction
+        const newVelocity = velocity * 0.92 // Friction
         setVelocity(newVelocity)
         
         if (scrollRef.current) {
@@ -269,47 +334,7 @@ const ProductShowcaseCarousel: React.FC<ProductShowcaseCarouselProps> = ({
         cancelAnimationFrame(animationFrameRef.current)
       }
     }
-  }, [velocity, isDragging, scrollLeft, currentIndex, visibleCardsCount])
-
-  const getCardWidth = useCallback(() => {
-    if (typeof window === 'undefined') return 320
-    
-    const width = window.innerWidth
-    const gap = 24
-    const containerPadding = 48
-    
-    if (width <= 768) return 280 + gap
-    return 320 + gap
-  }, [])
-
-  const nextSlide = useCallback(() => {
-    if (isScrolling) return
-    
-    setIsScrolling(true)
-    const nextIndex = (currentIndex + 1) % (productCategories.length - visibleCardsCount + 1)
-    setCurrentIndex(nextIndex)
-    
-    setTimeout(() => setIsScrolling(false), 500)
-  }, [currentIndex, visibleCardsCount, isScrolling])
-
-  const prevSlide = useCallback(() => {
-    if (isScrolling) return
-    
-    setIsScrolling(true)
-    const prevIndex = currentIndex === 0 ? productCategories.length - visibleCardsCount : currentIndex - 1
-    setCurrentIndex(prevIndex)
-    
-    setTimeout(() => setIsScrolling(false), 500)
-  }, [currentIndex, visibleCardsCount, isScrolling])
-
-  const goToSlide = useCallback((index: number) => {
-    if (isScrolling) return
-    
-    setIsScrolling(true)
-    setCurrentIndex(Math.max(0, Math.min(index, productCategories.length - visibleCardsCount)))
-    
-    setTimeout(() => setIsScrolling(false), 500)
-  }, [visibleCardsCount, isScrolling])
+  }, [velocity, isDragging, scrollLeft, currentIndex, visibleCardsCount, isReducedMotion, getCardWidth])
 
   // Touch and mouse event handlers
   const handleStart = (clientX: number) => {
@@ -349,7 +374,7 @@ const ProductShowcaseCarousel: React.FC<ProductShowcaseCarouselProps> = ({
     setIsDragging(false)
     
     const cardWidth = getCardWidth()
-    const threshold = cardWidth * 0.2
+    const threshold = cardWidth * (isTouchDevice ? 0.15 : 0.2)
     
     if (Math.abs(dragDelta) > threshold) {
       if (dragDelta > 0) {
@@ -357,7 +382,7 @@ const ProductShowcaseCarousel: React.FC<ProductShowcaseCarouselProps> = ({
       } else {
         nextSlide()
       }
-    } else if (Math.abs(velocity) > 2) {
+    } else if (Math.abs(velocity) > (isTouchDevice ? 1.5 : 2)) {
       // Momentum scrolling
       const direction = velocity > 0 ? -1 : 1
       const targetIndex = Math.max(0, Math.min(productCategories.length - visibleCardsCount, currentIndex + direction))
@@ -369,19 +394,23 @@ const ProductShowcaseCarousel: React.FC<ProductShowcaseCarouselProps> = ({
 
   // Mouse event handlers
   const handleMouseDown = (e: React.MouseEvent) => {
+    if (isTouchDevice) return
     e.preventDefault()
     handleStart(e.clientX)
   }
 
   const handleMouseMove = (e: React.MouseEvent) => {
+    if (isTouchDevice) return
     handleMove(e.clientX)
   }
 
   const handleMouseUp = () => {
+    if (isTouchDevice) return
     handleEnd()
   }
 
   const handleMouseLeave = () => {
+    if (isTouchDevice) return
     if (isDragging) {
       handleEnd()
     }
@@ -393,7 +422,6 @@ const ProductShowcaseCarousel: React.FC<ProductShowcaseCarouselProps> = ({
   }
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    e.preventDefault()
     handleMove(e.touches[0].clientX)
   }
 
@@ -428,49 +456,62 @@ const ProductShowcaseCarousel: React.FC<ProductShowcaseCarouselProps> = ({
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [isInView, prevSlide, nextSlide, goToSlide])
+  }, [isInView, prevSlide, nextSlide, goToSlide, visibleCardsCount])
 
-  const cardWidth = getCardWidth()
-  const translateX = isDragging 
-    ? -currentIndex * cardWidth + dragDelta 
-    : -currentIndex * cardWidth
+  const cardWidth = useMemo(() => getCardWidth(), [getCardWidth])
+  
+  const translateX = useMemo(() => {
+    const offset = isDragging ? dragDelta : 0
+    return -currentIndex * cardWidth + offset
+  }, [currentIndex, cardWidth, isDragging, dragDelta])
+
+  // Preload images for smoother transitions
+  useEffect(() => {
+    productCategories.forEach(category => {
+      if (category.bgImage) {
+        const img = new Image()
+        img.src = category.bgImage
+      }
+    })
+  }, [])
+
+  const transitionDuration = isReducedMotion ? '0ms' : isDragging ? '0ms' : '500ms'
 
   return (
     <section 
       ref={containerRef}
-      className="relative py-20 bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 overflow-hidden"
+      className="relative py-12 sm:py-16 md:py-20 bg-gradient-to-b from-gray-900 via-gray-800 to-gray-900 overflow-hidden"
       style={{
         background: `
-          radial-gradient(circle at 20% 20%, rgba(0, 255, 255, 0.1) 0%, transparent 50%),
-          radial-gradient(circle at 80% 80%, rgba(147, 51, 234, 0.1) 0%, transparent 50%),
+          radial-gradient(circle at 20% 20%, rgba(0, 255, 255, 0.08) 0%, transparent 50%),
+          radial-gradient(circle at 80% 80%, rgba(147, 51, 234, 0.08) 0%, transparent 50%),
           linear-gradient(135deg, #000000 0%, #0a0a0a 100%)
         `
       }}
     >
       {/* Background Effects */}
-      <div className="absolute inset-0">
+      <div className="absolute inset-0 pointer-events-none">
         <div 
-          className="absolute inset-0 opacity-10"
+          className={`absolute inset-0 opacity-5 ${isReducedMotion ? '' : 'animate-drift'}`}
           style={{
             backgroundImage: `
               radial-gradient(circle at 1px 1px, rgba(0, 255, 255, 0.3) 1px, transparent 0)
             `,
-            backgroundSize: "50px 50px",
-            animation: "drift 30s linear infinite"
+            backgroundSize: "50px 50px"
           }}
         />
       </div>
 
       {/* Section Header */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8 sm:mb-12 md:mb-16">
         <div className="text-center">
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4 sm:mb-6">
             <span className="bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 bg-clip-text text-transparent">
               Product
             </span>{" "}
             <span className="text-white">Categories</span>
           </h2>
-          <p className="text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-base sm:text-lg md:text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed px-4">
             Explore our comprehensive range of advanced technology solutions designed for critical applications
           </p>
         </div>
@@ -478,29 +519,29 @@ const ProductShowcaseCarousel: React.FC<ProductShowcaseCarouselProps> = ({
 
       {/* Carousel Container */}
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Navigation Buttons */}
+        {/* Navigation Buttons - Hidden on mobile */}
         <button
           onClick={prevSlide}
           disabled={currentIndex === 0}
-          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-full flex items-center justify-center text-white hover:from-cyan-400 hover:to-blue-500 transition-all duration-300 hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 shadow-lg backdrop-blur-sm"
+          className="hidden sm:flex absolute -left-2 lg:-left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-full items-center justify-center text-white hover:from-cyan-400 hover:to-blue-500 transition-all duration-300 hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 shadow-lg backdrop-blur-sm"
           aria-label="Previous products"
         >
-          <ChevronLeft className="w-6 h-6" />
+          <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
         </button>
 
         <button
           onClick={nextSlide}
           disabled={currentIndex >= productCategories.length - visibleCardsCount}
-          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-full flex items-center justify-center text-white hover:from-cyan-400 hover:to-blue-500 transition-all duration-300 hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 shadow-lg backdrop-blur-sm"
+          className="hidden sm:flex absolute -right-2 lg:-right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-full items-center justify-center text-white hover:from-cyan-400 hover:to-blue-500 transition-all duration-300 hover:scale-110 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 shadow-lg backdrop-blur-sm"
           aria-label="Next products"
         >
-          <ChevronRight className="w-6 h-6" />
+          <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
         </button>
 
         {/* Carousel Track */}
         <div 
           ref={scrollRef}
-          className="overflow-hidden cursor-grab active:cursor-grabbing select-none"
+          className="overflow-hidden cursor-grab active:cursor-grabbing select-none touch-pan-y"
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
@@ -508,54 +549,54 @@ const ProductShowcaseCarousel: React.FC<ProductShowcaseCarouselProps> = ({
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
-          style={{ willChange: 'transform' }}
         >
           <div 
-            className="flex transition-transform duration-500 ease-out"
+            className="flex"
             style={{
               transform: `translate3d(${translateX}px, 0, 0)`,
-              willChange: 'transform'
+              transition: `transform ${transitionDuration} cubic-bezier(0.4, 0, 0.2, 1)`,
+              willChange: isDragging ? 'transform' : 'auto'
             }}
           >
             {productCategories.map((category, index) => {
               const IconComponent = iconMap[category.icon as keyof typeof iconMap]
-              const isVisible = isInView && index <= currentIndex + visibleCardsCount
+              const isVisible = isInView && index >= currentIndex - 1 && index <= currentIndex + visibleCardsCount
+              const isActive = index === currentIndex
               
               return (
                 <div
                   key={category.id}
-                  className={`flex-shrink-0 px-3 transition-all duration-700 ${
+                  className={`flex-shrink-0 px-2 sm:px-3 transition-all duration-700 ${
                     isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
                   }`}
                   style={{
                     width: `${cardWidth}px`,
-                    transitionDelay: `${(index - currentIndex) * 100}ms`,
-                    willChange: 'transform, opacity'
+                    transitionDelay: isReducedMotion ? '0ms' : `${Math.max(0, (index - currentIndex) * 50)}ms`
                   }}
-                  onMouseEnter={() => setHoveredCard(category.id)}
-                  onMouseLeave={() => setHoveredCard(null)}
+                  onMouseEnter={() => !isTouchDevice && setHoveredCard(category.id)}
+                  onMouseLeave={() => !isTouchDevice && setHoveredCard(null)}
                 >
                   <div
-                    className={`relative h-96 md:h-[420px] rounded-2xl overflow-hidden group cursor-pointer transition-all duration-500 hover:scale-105 ${
-                      hoveredCard === category.id ? 'shadow-2xl shadow-cyan-500/20' : 'shadow-xl'
-                    }`}
+                    className={`relative h-[420px] sm:h-96 md:h-[420px] rounded-xl sm:rounded-2xl overflow-hidden group cursor-pointer transition-all duration-500 ${
+                      !isTouchDevice && hoveredCard === category.id ? 'sm:scale-105 shadow-2xl shadow-cyan-500/30' : ''
+                    } ${isActive ? 'shadow-xl' : 'shadow-lg'}`}
                     style={{
                       background: `linear-gradient(135deg, ${category.gradient.replace('from-', '').replace(' to-', ', ')})`,
-                      willChange: 'transform'
+                      transform: isTouchDevice || isReducedMotion ? 'none' : undefined
                     }}
-                    onClick={() => goToSlide(index)}
+                    onClick={() => isTouchDevice && goToSlide(index)}
                   >
                     {/* Background Image with Overlay */}
                     <div 
-                      className="absolute inset-0 bg-cover bg-center opacity-20 group-hover:opacity-30 transition-opacity duration-500"
+                      className="absolute inset-0 bg-cover bg-center opacity-20 transition-opacity duration-500"
                       style={{
                         backgroundImage: `url(${category.bgImage})`,
-                        willChange: 'opacity'
+                        opacity: hoveredCard === category.id ? 0.3 : 0.2
                       }}
                     />
                     
                     {/* Glass Morphism Overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/60 backdrop-blur-sm" />
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/60 backdrop-blur-[2px]" />
                     
                     {/* Gradient Overlay */}
                     <div 
@@ -566,15 +607,15 @@ const ProductShowcaseCarousel: React.FC<ProductShowcaseCarouselProps> = ({
                     />
 
                     {/* Content */}
-                    <div className="relative h-full flex flex-col justify-between p-6 text-white">
+                    <div className="relative h-full flex flex-col justify-between p-5 sm:p-6 text-white">
                       {/* Top Section */}
                       <div className="space-y-4">
-                        <div className="flex items-center justify-center w-16 h-16 bg-white/20 rounded-xl backdrop-blur-sm group-hover:bg-white/30 transition-colors duration-300">
-                          <IconComponent className="w-8 h-8 text-white" />
+                        <div className="flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 bg-white/20 rounded-xl backdrop-blur-sm group-hover:bg-white/30 transition-colors duration-300">
+                          <IconComponent className="w-7 h-7 sm:w-8 sm:h-8 text-white" />
                         </div>
                         
                         <div>
-                          <h3 className="text-lg font-semibold mb-2 leading-tight">
+                          <h3 className="text-xl sm:text-lg font-semibold mb-2 leading-tight">
                             {category.title}
                           </h3>
                           <p className="text-sm text-white/80 leading-relaxed">
@@ -583,41 +624,48 @@ const ProductShowcaseCarousel: React.FC<ProductShowcaseCarouselProps> = ({
                         </div>
                       </div>
 
-                      {/* Products List - Progressive Disclosure */}
+                      {/* Products List - Always visible on mobile, hover on desktop */}
                       <div className={`transition-all duration-500 transform ${
-                        hoveredCard === category.id 
+                        isTouchDevice || hoveredCard === category.id 
                           ? 'opacity-100 translate-y-0 max-h-60' 
-                          : 'opacity-0 translate-y-4 max-h-0'
+                          : 'opacity-0 translate-y-4 max-h-0 sm:opacity-0'
                       } overflow-hidden`}>
                         <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 mt-4">
                           <h4 className="text-sm font-medium mb-3 text-white/90">Products & Services:</h4>
                           <ul className="space-y-2">
-                            {category.products.map((product, productIndex) => (
+                            {category.products.slice(0, isTouchDevice ? 3 : category.products.length).map((product, productIndex) => (
                               <li 
                                 key={productIndex}
-                                className="text-xs text-white/80 flex items-start"
+                                className="text-xs text-white/80 flex items-start transition-all duration-300"
                                 style={{
-                                  transitionDelay: `${productIndex * 50}ms`
+                                  transitionDelay: isReducedMotion ? '0ms' : `${productIndex * 50}ms`
                                 }}
                               >
-                                <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full mt-2 mr-2 flex-shrink-0" />
-                                <span>{product}</span>
+                                <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full mt-1.5 mr-2 flex-shrink-0" />
+                                <span className="line-clamp-2">{product}</span>
                               </li>
                             ))}
+                            {isTouchDevice && category.products.length > 3 && (
+                              <li className="text-xs text-white/60 pl-3.5">
+                                +{category.products.length - 3} more...
+                              </li>
+                            )}
                           </ul>
                         </div>
                       </div>
 
-                      {/* Hover Indicator */}
-                      <div className={`absolute bottom-4 right-4 w-8 h-8 rounded-full border-2 border-white/40 flex items-center justify-center transition-all duration-300 ${
-                        hoveredCard === category.id ? 'bg-white/20 scale-110' : 'bg-transparent'
-                      }`}>
-                        <div className="w-2 h-2 bg-white rounded-full" />
-                      </div>
+                      {/* Hover Indicator - Desktop only */}
+                      {!isTouchDevice && (
+                        <div className={`hidden sm:flex absolute bottom-4 right-4 w-8 h-8 rounded-full border-2 border-white/40 items-center justify-center transition-all duration-300 ${
+                          hoveredCard === category.id ? 'bg-white/20 scale-110' : 'bg-transparent'
+                        }`}>
+                          <div className="w-2 h-2 bg-white rounded-full" />
+                        </div>
+                      )}
                     </div>
 
-                    {/* Active Card Indicator */}
-                    {index === currentIndex && (
+                    {/* Active Card Indicator - Mobile */}
+                    {isActive && isTouchDevice && (
                       <div className="absolute top-4 left-4 w-3 h-3 bg-cyan-400 rounded-full shadow-lg animate-pulse" />
                     )}
                   </div>
@@ -628,15 +676,15 @@ const ProductShowcaseCarousel: React.FC<ProductShowcaseCarouselProps> = ({
         </div>
 
         {/* Pagination Dots */}
-        <div className="flex justify-center mt-8 space-x-2">
+        <div className="flex justify-center mt-6 sm:mt-8 space-x-2 px-4">
           {Array.from({ length: Math.max(1, productCategories.length - visibleCardsCount + 1) }).map((_, index) => (
             <button
               key={index}
               onClick={() => goToSlide(index)}
-              className={`w-3 h-3 rounded-full transition-all duration-300 ${
+              className={`transition-all duration-300 ${
                 index === currentIndex 
-                  ? 'bg-cyan-400 shadow-lg shadow-cyan-400/50' 
-                  : 'bg-white/30 hover:bg-white/50'
+                  ? 'w-8 sm:w-10 h-2 sm:h-3 bg-cyan-400 rounded-full shadow-lg shadow-cyan-400/50' 
+                  : 'w-2 sm:w-3 h-2 sm:h-3 bg-white/30 hover:bg-white/50 rounded-full'
               }`}
               aria-label={`Go to slide ${index + 1}`}
             />
@@ -644,32 +692,35 @@ const ProductShowcaseCarousel: React.FC<ProductShowcaseCarouselProps> = ({
         </div>
       </div>
 
-      {/* Loading Shimmer for Images */}
+      {/* CSS for animations */}
       <style jsx>{`
         @keyframes drift {
           0% { transform: translate(0, 0); }
           100% { transform: translate(50px, 50px); }
         }
         
-        @keyframes shimmer {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(100%); }
+        .animate-drift {
+          animation: drift 30s linear infinite;
         }
         
-        .shimmer {
-          position: relative;
-          overflow: hidden;
+        @media (prefers-reduced-motion: reduce) {
+          .animate-drift {
+            animation: none;
+          }
         }
         
-        .shimmer::after {
-          content: '';
-          position: absolute;
-          top: 0;
-          right: 0;
-          bottom: 0;
-          left: 0;
-          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-          animation: shimmer 2s infinite;
+        /* Improve touch scrolling */
+        @supports (-webkit-touch-callout: none) {
+          .touch-pan-y {
+            -webkit-overflow-scrolling: touch;
+          }
+        }
+        
+        /* Optimize for mobile performance */
+        @media (max-width: 640px) {
+          * {
+            -webkit-tap-highlight-color: transparent;
+          }
         }
       `}</style>
     </section>
