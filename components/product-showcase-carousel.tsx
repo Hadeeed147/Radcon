@@ -459,8 +459,7 @@ const ProductShowcaseCarousel: React.FC<ProductShowcaseCarouselProps> = ({
     }
   }
 
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    // Don't prevent default
+  const handleTouchEnd = () => {
     handleEnd()
   }
 
