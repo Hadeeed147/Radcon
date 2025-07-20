@@ -198,7 +198,6 @@ const ProductShowcaseCarousel: React.FC<ProductShowcaseCarouselProps> = ({
   const [isScrolling, setIsScrolling] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
   const [startPos, setStartPos] = useState({ x: 0, y: 0 })
-  const [currentPos, setCurrentPos] = useState({ x: 0, y: 0 })
   const [dragDelta, setDragDelta] = useState(0)
   const [hoveredCard, setHoveredCard] = useState<number | null>(null)
   const [isInView, setIsInView] = useState(false)
@@ -212,7 +211,6 @@ const ProductShowcaseCarousel: React.FC<ProductShowcaseCarouselProps> = ({
   const containerRef = useRef<HTMLDivElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const autoScrollTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const animationFrameRef = useRef<number | null>(null)
   const observerRef = useRef<IntersectionObserver | null>(null)
 
   // Detect touch device and reduced motion preference
@@ -348,7 +346,6 @@ const ProductShowcaseCarousel: React.FC<ProductShowcaseCarouselProps> = ({
   const handleStart = useCallback((clientX: number, clientY: number) => {
     setIsDragging(true)
     setStartPos({ x: clientX, y: clientY })
-    setCurrentPos({ x: clientX, y: clientY })
     setDragDelta(0)
     setVelocity(0)
     setLastMoveTime(Date.now())
@@ -388,7 +385,6 @@ const ProductShowcaseCarousel: React.FC<ProductShowcaseCarouselProps> = ({
     
     setLastMoveTime(now)
     setLastMoveX(clientX)
-    setCurrentPos({ x: clientX, y: clientY })
     setDragDelta(deltaX)
   }, [isDragging, startPos, lastMoveTime, lastMoveX, isVerticalScroll])
 
@@ -587,15 +583,6 @@ const ProductShowcaseCarousel: React.FC<ProductShowcaseCarouselProps> = ({
             <p className="text-base sm:text-lg md:text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed px-4">
               Explore our comprehensive range of advanced technology solutions designed for critical defense, aerospace, and communication applications
             </p>
-            
-            {/* SEO: Breadcrumb navigation */}
-            <nav aria-label="Breadcrumb" className="mt-4">
-              <ol className="flex justify-center items-center space-x-2 text-sm text-gray-400">
-                <li><a href="/" className="hover:text-cyan-400 transition-colors">Home</a></li>
-                <li aria-hidden="true">›</li>
-                <li><span className="text-cyan-400" aria-current="page">Products</span></li>
-              </ol>
-            </nav>
           </div>
         </header>
 
@@ -678,9 +665,9 @@ const ProductShowcaseCarousel: React.FC<ProductShowcaseCarouselProps> = ({
                       onClick={() => isTouchDevice && goToSlide(index)}
                       role="button"
                       tabIndex={isActive ? 0 : -1}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault()
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault()
                           goToSlide(index)
                         }
                       }}
