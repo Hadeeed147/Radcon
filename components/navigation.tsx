@@ -1,7 +1,26 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { Cog, Cpu, User, Mail, ChevronDown, Zap, Settings, Wrench, Activity } from "lucide-react"
+import { 
+  Cog, 
+  Cpu, 
+  User, 
+  Mail, 
+  ChevronDown, 
+  Zap, 
+  Settings, 
+  Wrench, 
+  Activity,
+  Shield,
+  Radio,
+  Battery,
+  Smartphone,
+  Eye,
+  Navigation as NavigationIcon,
+  Plane,
+  Radar,
+  Camera
+} from "lucide-react"
 import { useScrollDirection } from "../hooks/use-scroll-direction"
 
 const navItems = [
@@ -49,12 +68,80 @@ const navItems = [
     name: "Products", 
     icon: Activity,
     hasDropdown: true,
-    dropdownItems: [
-      { name: "VJAM Series", href: "#vjam" },
-      { name: "NG Series", href: "#ng-series" },
-      { name: "Specialized Equipment", href: "#specialized" },
-      { name: "Custom Solutions", href: "#custom" }
-    ]
+    isMegaMenu: true,
+    megaMenuData: {
+      domains: [
+        {
+          title: "Life-Saving Equipment",
+          icon: Shield,
+          solutions: [
+            "RCIED Counter Jammers for Convoy Protection",
+            "VHF/UHF and HF Bands",
+            "VHF/UHF ISM and GSM 3G/4G/LTE",
+            "GPS Jammers",
+            "Customized Jammers"
+          ]
+        },
+        {
+          title: "RF and Microwave",
+          icon: Radio,
+          solutions: [
+            "RF Amplifiers",
+            "Phase Shifters",
+            "Antennas",
+            "RF Cable Assemblies"
+          ]
+        },
+        {
+          title: "Power Systems",
+          icon: Battery,
+          solutions: [
+            "Design of Power Supplies (Customized Requirements)",
+            "High Voltage Rectification (30 kV)"
+          ]
+        },
+        {
+          title: "Embedded Systems",
+          icon: Cpu,
+          solutions: ["Details coming soon"]
+        },
+        {
+          title: "Communication Equipment",
+          icon: Smartphone,
+          solutions: ["VHF/UHF Walkie Talkie Sets"]
+        },
+        {
+          title: "Optronics",
+          icon: Eye,
+          solutions: ["Details coming soon"]
+        },
+        {
+          title: "Navigation",
+          icon: NavigationIcon,
+          solutions: ["Details coming soon"]
+        },
+        {
+          title: "Aviation Industry",
+          icon: Plane,
+          solutions: [
+            "Multi-Function Displays (MFD) for Helicopters",
+            "Radar Altimeters",
+            "Additional products available upon request"
+          ]
+        },
+        {
+          title: "Indigenous Development Of Radar Parts",
+          icon: Radar,
+          solutions: [
+            "Camera Modules for Optical Tracking",
+            "TFT Displays",
+            "Memory Units",
+            "Video Amplifier Cards",
+            "Control Cards"
+          ]
+        }
+      ]
+    }
   },
   { 
     name: "Media", 
@@ -295,20 +382,24 @@ export default function Navigation() {
                   {item.hasDropdown && activeDropdown === item.name && (
                     <div className="absolute top-full left-0 mt-2 z-50">
                       {item.isMegaMenu ? (
-                        // Mega Menu for Capabilities
+                        // Mega Menu for Capabilities and Products
                         <div
-                          className="w-screen max-w-4xl p-6 rounded-xl shadow-2xl border border-cyan-400/30"
+                          className={`p-6 rounded-xl shadow-2xl border border-cyan-400/30 ${
+                            item.name === "Products" ? "w-[90vw] max-w-5xl" : "w-screen max-w-4xl"
+                          }`}
                           style={{
                             background: `
                               linear-gradient(135deg, rgba(0, 0, 0, 0.95) 0%, rgba(0, 20, 40, 0.95) 100%),
                               radial-gradient(circle at 50% 0%, rgba(0, 255, 255, 0.1) 0%, transparent 50%)
                             `,
                             backdropFilter: "blur(20px)",
-                            transform: "translateX(-50%)",
-                            left: "50%"
+                            transform: item.name === "Products" ? "translateX(-75%)" : "translateX(-50%)",
+                            left: item.name === "Products" ? "75%" : "50%"
                           }}
                         >
-                          <div className="grid grid-cols-2 gap-6">
+                          <div className={`grid gap-6 ${
+                            item.name === "Products" ? "grid-cols-3" : "grid-cols-2"
+                          }`}>
                             {item.megaMenuData?.domains.map((domain) => {
                               const DomainIcon = domain.icon
                               return (
@@ -322,7 +413,7 @@ export default function Navigation() {
                                       <li key={solution}>
                                         <button
                                           onClick={() => handleNavClick(solution)}
-                                          className="text-gray-300 hover:text-cyan-400 transition-colors duration-200 text-sm"
+                                          className="text-gray-300 hover:text-cyan-400 transition-colors duration-200 text-sm text-left w-full"
                                         >
                                           {solution}
                                         </button>
@@ -457,14 +548,14 @@ export default function Navigation() {
                         activeMobileDropdown === item.name ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2"
                       }`}
                       style={{
-                        maxHeight: item.isMegaMenu ? "400px" : "300px",
+                        maxHeight: item.isMegaMenu ? "500px" : "300px",
                         overflowY: "auto",
                         WebkitOverflowScrolling: "touch"
                       }}
                       onClick={(e) => e.stopPropagation()}
                     >
                       {item.isMegaMenu ? (
-                        // Mobile Mega Menu for Capabilities
+                        // Mobile Mega Menu for Capabilities and Products
                         <div className="space-y-4 pr-2">
                           {item.megaMenuData?.domains.map((domain) => {
                             const DomainIcon = domain.icon
