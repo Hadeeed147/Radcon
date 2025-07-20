@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
+import Image from "next/image"
 import { 
   Cog, 
   Cpu, 
@@ -18,8 +19,7 @@ import {
   Eye,
   Navigation as NavigationIcon,
   Plane,
-  Radar,
-  Camera
+  Radar
 } from "lucide-react"
 import { useScrollDirection } from "../hooks/use-scroll-direction"
 
@@ -321,9 +321,11 @@ export default function Navigation() {
 
               <div className="relative z-10 transition-all duration-300 group-hover:scale-105">
                 {/* Actual RADCON Logo */}
-                <img 
+                <Image 
                   src="/images/radcon-logo.png" 
                   alt="RADCON Technologies" 
+                  width={120}
+                  height={64}
                   className="h-16 w-auto filter brightness-0 invert group-hover:drop-shadow-[0_0_15px_rgba(0,255,255,0.6)] transition-all duration-300"
                 />
                 
