@@ -2,6 +2,7 @@ import Navigation from "../components/navigation"
 import HeroSection from "../components/hero-section"
 import ServicesOverview from "../components/services-overview"
 import StatisticsSection from "../components/statistics-section"
+import ProductShowcaseCarousel from "../components/product-showcase-carousel"
 
 export default function Page() {
   return (
@@ -10,7 +11,7 @@ export default function Page() {
       <HeroSection />
       <ServicesOverview />
       <StatisticsSection />
-      
+      <ProductShowcaseCarousel />
       <section id="about" className="min-h-screen bg-gray-900 flex items-center justify-center">
         <h2 className="text-4xl font-bold text-white">About Section</h2>
       </section>
