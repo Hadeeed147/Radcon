@@ -338,7 +338,7 @@ export default function Navigation() {
         />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
-          <div className="flex items-center h-full relative">
+          <div className="flex items-center h-full relative justify-between md:justify-start">
             {/* Enhanced Logo with Actual RADCON Image */}
             <div className="cursor-pointer group relative overflow-hidden" onClick={scrollToTop}>
               {/* Particle effects background */}
@@ -501,7 +501,7 @@ export default function Navigation() {
                                           // Domains that should open to the LEFT (getting cut off when opening right)
                                           const leftOpeningDomains = [
                                             "Power Systems", // User reported: opens right, gets cut off
-                                            "Aviation Industry", 
+                                            "Optronics", // User requested: should open left instead of right 
                                             "Indigenous Development Of Radar Parts"
                                           ];
                                           // All other domains should open to the RIGHT (including Embedded Systems & Navigation per user request)
@@ -597,7 +597,7 @@ export default function Navigation() {
 
             {/* Enhanced Mobile Menu Button */}
             <button
-              className="md:hidden p-2 text-gray-300 hover:text-cyan-400 transition-all duration-300 relative group absolute right-0"
+              className="md:hidden p-2 text-gray-300 hover:text-cyan-400 transition-all duration-300 relative group"
               onClick={(e) => {
                 e.stopPropagation()
                 setIsMenuOpen(!isMenuOpen)
