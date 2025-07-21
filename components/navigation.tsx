@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import Image from "next/image"
 import { 
   Cog, 
@@ -19,7 +19,8 @@ import {
   Eye,
   Navigation as NavigationIcon,
   Plane,
-  Radar
+  Radar,
+  ChevronRight
 } from "lucide-react"
 import { useScrollDirection } from "../hooks/use-scroll-direction"
 
@@ -69,6 +70,7 @@ const navItems = [
     icon: Activity,
     hasDropdown: true,
     isMegaMenu: true,
+    hasSubDropdowns: true,
     megaMenuData: {
       domains: [
         {
@@ -160,40 +162,53 @@ export default function Navigation() {
   const [activeItem, setActiveItem] = useState("Corporate")
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null)
   const [activeMobileDropdown, setActiveMobileDropdown] = useState<string | null>(null)
+  const [activeSubDropdown, setActiveSubDropdown] = useState<string | null>(null)
+  const [activeMobileSubDropdown, setActiveMobileSubDropdown] = useState<string | null>(null)
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
   const {isVisible, scrollY } = useScrollDirection()
   const navRef = useRef<HTMLElement>(null)
   const dropdownTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const subDropdownTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Mouse tracking for spotlight effect
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (navRef.current) {
-        const rect = navRef.current.getBoundingClientRect()
-        setMousePosition({
-          x: e.clientX - rect.left,
-          y: e.clientY - rect.top,
-        })
-      }
+  // Optimized mouse tracking for spotlight effect using useCallback
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (navRef.current) {
+      const rect = navRef.current.getBoundingClientRect()
+      setMousePosition({
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top,
+      })
     }
+  }, [])
 
+  useEffect(() => {
     const nav = navRef.current
     if (nav) {
       nav.addEventListener("mousemove", handleMouseMove)
       return () => nav.removeEventListener("mousemove", handleMouseMove)
     }
-  }, [])
+  }, [handleMouseMove])
 
-  // Close mobile menu when clicking outside and handle body scroll
+  // Enhanced cleanup and body scroll management
   useEffect(() => {
-    const handleClickOutside = () => {
+    const handleClickOutside = (e: MouseEvent) => {
+      // Don't close if clicking inside the navigation
+      if (navRef.current && navRef.current.contains(e.target as Node)) {
+        return
+      }
+      
       if (isMenuOpen) setIsMenuOpen(false)
       setActiveDropdown(null)
       setActiveMobileDropdown(null)
+      setActiveSubDropdown(null)
+      setActiveMobileSubDropdown(null)
     }
 
     if (isMenuOpen || activeDropdown || activeMobileDropdown) {
-      document.addEventListener("click", handleClickOutside)
+      // Use a slight delay to avoid conflicts with click handlers
+      setTimeout(() => {
+        document.addEventListener("click", handleClickOutside)
+      }, 100)
     }
 
     // Prevent body scroll when mobile menu is open
@@ -209,16 +224,18 @@ export default function Navigation() {
     }
   }, [isMenuOpen, activeDropdown, activeMobileDropdown])
 
-  const scrollToTop = () => {
+  const scrollToTop = useCallback(() => {
     window.scrollTo({ top: 0, behavior: "smooth" })
     setActiveItem("Corporate")
-  }
+  }, [])
 
-  const handleNavClick = (item: string, href?: string) => {
+  const handleNavClick = useCallback((item: string, href?: string) => {
     setActiveItem(item)
     setIsMenuOpen(false)
     setActiveDropdown(null)
     setActiveMobileDropdown(null)
+    setActiveSubDropdown(null)
+    setActiveMobileSubDropdown(null)
 
     if (href) {
       const element = document.querySelector(href)
@@ -228,24 +245,52 @@ export default function Navigation() {
     } else if (item === "Corporate") {
       scrollToTop()
     }
-  }
+  }, [scrollToTop])
 
-  const handleDropdownEnter = (itemName: string) => {
+  const handleDropdownEnter = useCallback((itemName: string) => {
     if (dropdownTimeoutRef.current) {
       clearTimeout(dropdownTimeoutRef.current)
     }
     setActiveDropdown(itemName)
-  }
+  }, [])
 
-  const handleMobileDropdownToggle = (itemName: string) => {
-    setActiveMobileDropdown(activeMobileDropdown === itemName ? null : itemName)
-  }
-
-  const handleDropdownLeave = () => {
+  const handleDropdownLeave = useCallback(() => {
     dropdownTimeoutRef.current = setTimeout(() => {
       setActiveDropdown(null)
+      setActiveSubDropdown(null)
     }, 150)
-  }
+  }, [])
+
+  const handleSubDropdownEnter = useCallback((domainTitle: string) => {
+    if (subDropdownTimeoutRef.current) {
+      clearTimeout(subDropdownTimeoutRef.current)
+    }
+    setActiveSubDropdown(domainTitle)
+  }, [])
+
+  const handleSubDropdownLeave = useCallback(() => {
+    subDropdownTimeoutRef.current = setTimeout(() => {
+      setActiveSubDropdown(null)
+    }, 150)
+  }, [])
+
+  const handleMobileDropdownToggle = useCallback((itemName: string) => {
+    if (activeMobileDropdown === itemName) {
+      setActiveMobileDropdown(null)
+      setActiveMobileSubDropdown(null)
+    } else {
+      setActiveMobileDropdown(itemName)
+      setActiveMobileSubDropdown(null) // Reset subdropdowns when switching main dropdowns
+    }
+  }, [activeMobileDropdown])
+
+  const handleMobileSubDropdownToggle = useCallback((domainTitle: string, e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault()
+      e.stopPropagation()
+    }
+    setActiveMobileSubDropdown(activeMobileSubDropdown === domainTitle ? null : domainTitle)
+  }, [activeMobileSubDropdown])
 
   const scrollProgress = typeof document !== 'undefined' 
     ? Math.min(scrollY / (document.documentElement.scrollHeight - window.innerHeight), 1) * 100 
@@ -293,9 +338,9 @@ export default function Navigation() {
         />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
-          <div className="flex items-center justify-between h-full">
+          <div className="flex items-center h-full relative">
             {/* Enhanced Logo with Actual RADCON Image */}
-            <div className="pl-6 cursor-pointer group relative overflow-hidden" onClick={scrollToTop}>
+            <div className="cursor-pointer group relative overflow-hidden" onClick={scrollToTop}>
               {/* Particle effects background */}
               <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
                 {[
@@ -337,8 +382,8 @@ export default function Navigation() {
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-cyan-400/20 to-transparent opacity-0 group-hover:opacity-100 blur-xl transition-opacity duration-500 animate-breathing" />
             </div>
 
-            {/* Enhanced Desktop Navigation */}
-            <div className="hidden md:flex items-center space-x-6">
+            {/* Enhanced Desktop Navigation - Centered */}
+            <div className="hidden md:flex items-center space-x-6 absolute left-1/2 transform -translate-x-1/2">
               {navItems.map((item) => (
                 <div
                   key={item.name}
@@ -382,12 +427,27 @@ export default function Navigation() {
 
                   {/* Dropdown Menu */}
                   {item.hasDropdown && activeDropdown === item.name && (
-                    <div className="absolute top-full left-0 mt-2 z-50">
+                    <div 
+                      className="absolute top-full mt-2 z-50"
+                      style={{
+                        // Centered positioning to prevent overflow
+                        ...(item.isMegaMenu ? {
+                          left: '50%',
+                          transform: 'translateX(-50%)',
+                          width: item.name === "Products" ? '95vw' : '80vw',
+                          maxWidth: item.name === "Products" ? '1200px' : '900px',
+                        } : {
+                          left: '50%',
+                          transform: 'translateX(-50%)',
+                          minWidth: '14rem'
+                        })
+                      }}
+                    >
                       {item.isMegaMenu ? (
-                        // Mega Menu for Capabilities and Products
+                        // Enhanced Mega Menu with Sub-dropdowns
                         <div
                           className={`p-6 rounded-xl shadow-2xl border border-cyan-400/30 ${
-                            item.name === "Products" ? "w-[90vw] max-w-5xl" : "w-screen max-w-4xl"
+                            item.name === "Products" ? "max-w-6xl" : "max-w-4xl"
                           }`}
                           style={{
                             background: `
@@ -395,8 +455,6 @@ export default function Navigation() {
                               radial-gradient(circle at 50% 0%, rgba(0, 255, 255, 0.1) 0%, transparent 50%)
                             `,
                             backdropFilter: "blur(20px)",
-                            transform: item.name === "Products" ? "translateX(-75%)" : "translateX(-50%)",
-                            left: item.name === "Products" ? "75%" : "50%"
                           }}
                         >
                           <div className={`grid gap-6 ${
@@ -405,23 +463,101 @@ export default function Navigation() {
                             {item.megaMenuData?.domains.map((domain) => {
                               const DomainIcon = domain.icon
                               return (
-                                <div key={domain.title} className="group">
-                                  <div className="flex items-center space-x-3 mb-3">
-                                    <DomainIcon className="w-5 h-5 text-cyan-400" />
-                                    <h3 className="text-lg font-semibold text-cyan-400">{domain.title}</h3>
+                                <div 
+                                  key={domain.title} 
+                                  className="group relative"
+                                  onMouseEnter={() => item.hasSubDropdowns && handleSubDropdownEnter(domain.title)}
+                                  onMouseLeave={() => item.hasSubDropdowns && handleSubDropdownLeave()}
+                                >
+                                  <div className={`flex items-center justify-between mb-3 p-2 rounded-lg transition-all duration-300 ${
+                                    item.hasSubDropdowns ? 'cursor-pointer hover:bg-cyan-400/10' : ''
+                                  }`}>
+                                    <div className="flex items-center space-x-3">
+                                      <DomainIcon className="w-5 h-5 text-cyan-400" />
+                                      <h3 className="text-lg font-semibold text-cyan-400">{domain.title}</h3>
+                                    </div>
+                                    {item.hasSubDropdowns && (
+                                      <ChevronRight 
+                                        className={`w-4 h-4 text-cyan-400 transition-transform duration-300 ${
+                                          activeSubDropdown === domain.title ? "rotate-90" : ""
+                                        }`} 
+                                      />
+                                    )}
                                   </div>
-                                  <ul className="space-y-2">
-                                    {domain.solutions.map((solution) => (
-                                      <li key={solution}>
-                                        <button
-                                          onClick={() => handleNavClick(solution)}
-                                          className="text-gray-300 hover:text-cyan-400 transition-colors duration-200 text-sm text-left w-full"
-                                        >
-                                          {solution}
-                                        </button>
-                                      </li>
-                                    ))}
-                                  </ul>
+                                  
+                                  {/* Sub-dropdown for Products */}
+                                  {item.hasSubDropdowns && activeSubDropdown === domain.title ? (
+                                    <div
+                                      className="absolute top-0 w-64 p-4 rounded-xl shadow-2xl border border-cyan-400/30"
+                                      style={{
+                                        background: `
+                                          linear-gradient(135deg, rgba(0, 0, 0, 0.98) 0%, rgba(0, 30, 60, 0.98) 100%),
+                                          radial-gradient(circle at 20% 20%, rgba(0, 255, 255, 0.15) 0%, transparent 50%)
+                                        `,
+                                        backdropFilter: "blur(25px)",
+                                        zIndex: 60,
+                                        // Smart positioning based on specific domain names and their positions
+                                        ...((() => {
+                                          // Domains that should open to the LEFT (getting cut off when opening right)
+                                          const leftOpeningDomains = [
+                                            "Power Systems", // User reported: opens right, gets cut off
+                                            "Aviation Industry", 
+                                            "Indigenous Development Of Radar Parts"
+                                          ];
+                                          // All other domains should open to the RIGHT (including Embedded Systems & Navigation per user request)
+                                          
+                                          if (leftOpeningDomains.includes(domain.title)) {
+                                            // Open to the left
+                                            return {
+                                              right: '100%',
+                                              left: 'auto',
+                                              marginRight: '8px'
+                                            };
+                                          } else {
+                                            // Open to the right (left and middle columns)
+                                            return {
+                                              left: '100%',
+                                              right: 'auto',
+                                              marginLeft: '8px'
+                                            };
+                                          }
+                                        })())
+                                      }}
+                                    >
+                                      <ul className="space-y-2">
+                                        {domain.solutions.map((solution, index) => (
+                                          <li key={solution}>
+                                            <button
+                                              onClick={() => handleNavClick(solution)}
+                                              className="w-full text-left p-2 rounded-lg text-gray-300 hover:text-cyan-400 hover:bg-cyan-400/10 transition-all duration-200 text-sm group"
+                                              style={{
+                                                animationDelay: `${index * 50}ms`
+                                              }}
+                                            >
+                                              <div className="flex items-center space-x-2">
+                                                <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"></span>
+                                                <span>{solution}</span>
+                                              </div>
+                                            </button>
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  ) : !item.hasSubDropdowns ? (
+                                    // Regular mega menu items (for Capabilities)
+                                    <ul className="space-y-2">
+                                      {domain.solutions.map((solution) => (
+                                        <li key={solution}>
+                                          <button
+                                            onClick={() => handleNavClick(solution)}
+                                            className="text-gray-300 hover:text-cyan-400 transition-colors duration-200 text-sm text-left w-full"
+                                          >
+                                            {solution}
+                                          </button>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  ) : null}
                                 </div>
                               )
                             })}
@@ -461,7 +597,7 @@ export default function Navigation() {
 
             {/* Enhanced Mobile Menu Button */}
             <button
-              className="md:hidden p-2 text-gray-300 hover:text-cyan-400 transition-all duration-300 relative group"
+              className="md:hidden p-2 text-gray-300 hover:text-cyan-400 transition-all duration-300 relative group absolute right-0"
               onClick={(e) => {
                 e.stopPropagation()
                 setIsMenuOpen(!isMenuOpen)
@@ -491,7 +627,7 @@ export default function Navigation() {
           </div>
         </div>
 
-        {/* Mobile Menu */}
+        {/* Enhanced Mobile Menu */}
         <div
           className={`md:hidden absolute top-full left-0 right-0 transition-all duration-500 transform ${
             isMenuOpen ? "opacity-100 translate-y-0 visible" : "opacity-0 -translate-y-4 invisible"
@@ -515,7 +651,9 @@ export default function Navigation() {
               return (
                 <div key={item.name}>
                   <button
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
                       if (item.hasDropdown) {
                         handleMobileDropdownToggle(item.name)
                       } else {
@@ -546,38 +684,82 @@ export default function Navigation() {
                   {/* Mobile Dropdown Content */}
                   {item.hasDropdown && activeMobileDropdown === item.name && (
                     <div
-                      className={`mt-2 ml-4 space-y-2 transition-all duration-300 transform ${
-                        activeMobileDropdown === item.name ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2"
-                      }`}
+                      className="mt-2 ml-4 space-y-2 transition-all duration-300 transform opacity-100 translate-y-0"
                       style={{
-                        maxHeight: item.isMegaMenu ? "500px" : "300px",
+                        maxHeight: item.isMegaMenu ? "600px" : "300px",
                         overflowY: "auto",
                         WebkitOverflowScrolling: "touch"
                       }}
                       onClick={(e) => e.stopPropagation()}
                     >
                       {item.isMegaMenu ? (
-                        // Mobile Mega Menu for Capabilities and Products
-                        <div className="space-y-4 pr-2">
+                        // Enhanced Mobile Mega Menu with Sub-dropdowns
+                        <div className="space-y-3 pr-2">
                           {item.megaMenuData?.domains.map((domain) => {
                             const DomainIcon = domain.icon
                             return (
-                              <div key={domain.title} className="bg-cyan-400/5 rounded-lg p-3 border border-cyan-400/20">
-                                <div className="flex items-center space-x-2 mb-2">
-                                  <DomainIcon className="w-4 h-4 text-cyan-400" />
-                                  <h4 className="text-sm font-semibold text-cyan-400">{domain.title}</h4>
-                                </div>
-                                <div className="space-y-1">
-                                  {domain.solutions.map((solution) => (
-                                    <button
-                                      key={solution}
-                                      onClick={() => handleNavClick(solution)}
-                                      className="block w-full text-left text-xs text-gray-400 hover:text-cyan-300 py-1 px-2 rounded transition-colors duration-200"
-                                    >
-                                      {solution}
-                                    </button>
-                                  ))}
-                                </div>
+                              <div key={domain.title} className="bg-cyan-400/5 rounded-lg border border-cyan-400/20">
+                                <button
+                                  onClick={(e) => {
+                                    e.preventDefault()
+                                    e.stopPropagation()
+                                    if (item.hasSubDropdowns) {
+                                      handleMobileSubDropdownToggle(domain.title, e)
+                                    }
+                                  }}
+                                  className="w-full p-3 flex items-center justify-between hover:bg-cyan-400/10 transition-colors duration-200 rounded-lg"
+                                >
+                                  <div className="flex items-center space-x-2">
+                                    <DomainIcon className="w-4 h-4 text-cyan-400" />
+                                    <h4 className="text-sm font-semibold text-cyan-400">{domain.title}</h4>
+                                  </div>
+                                  {item.hasSubDropdowns && (
+                                    <ChevronDown 
+                                      className={`w-3 h-3 text-cyan-400 transition-transform duration-300 ${
+                                        activeMobileSubDropdown === domain.title ? "rotate-180" : ""
+                                      }`} 
+                                    />
+                                  )}
+                                </button>
+                                
+                                {/* Mobile Sub-dropdown */}
+                                {item.hasSubDropdowns && activeMobileSubDropdown === domain.title && (
+                                  <div className="px-3 pb-3 space-y-1">
+                                    {domain.solutions.map((solution) => (
+                                      <button
+                                        key={solution}
+                                        onClick={(e) => {
+                                          e.stopPropagation()
+                                          handleNavClick(solution)
+                                        }}
+                                        className="block w-full text-left text-xs text-gray-400 hover:text-cyan-300 py-2 px-3 rounded transition-colors duration-200 hover:bg-cyan-400/5"
+                                      >
+                                        <div className="flex items-center space-x-2">
+                                          <span className="w-1 h-1 bg-cyan-400 rounded-full"></span>
+                                          <span>{solution}</span>
+                                        </div>
+                                      </button>
+                                    ))}
+                                  </div>
+                                )}
+                                
+                                {/* Regular mobile mega menu items (for non-subdropdown items) */}
+                                {!item.hasSubDropdowns && (
+                                  <div className="px-3 pb-3 space-y-1">
+                                    {domain.solutions.map((solution) => (
+                                      <button
+                                        key={solution}
+                                        onClick={(e) => {
+                                          e.stopPropagation()
+                                          handleNavClick(solution)
+                                        }}
+                                        className="block w-full text-left text-xs text-gray-400 hover:text-cyan-300 py-1 px-2 rounded transition-colors duration-200"
+                                      >
+                                        {solution}
+                                      </button>
+                                    ))}
+                                  </div>
+                                )}
                               </div>
                             )
                           })}
@@ -659,6 +841,24 @@ export default function Navigation() {
 
         .magnetic-hover:hover {
           transform: translateY(-2px) scale(1.05);
+        }
+
+        /* Custom scrollbar for mobile menu */
+        .mobile-menu-content::-webkit-scrollbar {
+          width: 3px;
+        }
+
+        .mobile-menu-content::-webkit-scrollbar-track {
+          background: rgba(0, 255, 255, 0.1);
+        }
+
+        .mobile-menu-content::-webkit-scrollbar-thumb {
+          background: rgba(0, 255, 255, 0.5);
+          border-radius: 3px;
+        }
+
+        .mobile-menu-content::-webkit-scrollbar-thumb:hover {
+          background: rgba(0, 255, 255, 0.8);
         }
       `}</style>
     </>
