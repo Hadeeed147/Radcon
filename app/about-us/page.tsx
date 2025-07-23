@@ -250,7 +250,7 @@ export default function AboutUsPage() {
                       <div className="text-center">
                         <Building className="w-24 h-24 text-cyan-400 mx-auto mb-4 opacity-50" />
                         <p className="text-slate-400 text-sm">Hero Image Placeholder</p>
-                        <p className="text-slate-500 text-xs mt-2">See AI prompts below</p>
+                        <p className="text-slate-500 text-xs mt-2"></p>
                       </div>
                     </div>
                   </div>
