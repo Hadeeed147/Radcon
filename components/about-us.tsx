@@ -104,7 +104,7 @@ export default function AboutSection() {
           
           <div className={`transition-all duration-1000 delay-400 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
             <p className="text-slate-300 text-base md:text-lg max-w-3xl mx-auto leading-relaxed px-4">
-              Since 2018, we've been transforming complex engineering challenges into innovative solutions, 
+              Since 2018, we&apos;ve been transforming complex engineering challenges into innovative solutions, 
               specializing in cutting-edge electronics and precision manufacturing.
             </p>
           </div>

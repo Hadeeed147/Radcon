@@ -1,23 +1,20 @@
 "use client";
 
 import { 
-  Shield, Cpu, Radio, Wrench, ArrowRight, Calendar, Users, Award, Target, Zap, 
-  Eye, Heart, Lightbulb, CheckCircle, Globe, Building, Rocket, Star, 
-  Phone, Mail, MapPin, ExternalLink, TrendingUp, Layers, Cog, Sparkles,
-  MousePointer, Play, ChevronDown, Factory, Microscope, Brain, Wifi
+  Shield, ArrowRight, Calendar, Award, Target, Zap, 
+  Eye, Globe, Building, Rocket, 
+  Phone, Mail, MapPin, TrendingUp, Sparkles,
+  ChevronDown, Factory, Brain
 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import Navigation from '../../components/navigation';
-import Image from 'next/image';
 
 export default function AboutUsPage() {
-  const [activeSection, setActiveSection] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [hoveredCard, setHoveredCard] = useState<number | null>(null);
   const [animatedStats, setAnimatedStats] = useState([0, 0, 0, 0]);
   const heroRef = useRef<HTMLElement>(null);
-  const [playingVideo, setPlayingVideo] = useState(false);
 
   // Mouse tracking for hero parallax
   useEffect(() => {
@@ -31,9 +28,10 @@ export default function AboutUsPage() {
       }
     };
 
-    if (heroRef.current) {
-      heroRef.current.addEventListener('mousemove', handleMouseMove);
-      return () => heroRef.current?.removeEventListener('mousemove', handleMouseMove);
+    const currentHeroRef = heroRef.current;
+    if (currentHeroRef) {
+      currentHeroRef.addEventListener('mousemove', handleMouseMove);
+      return () => currentHeroRef.removeEventListener('mousemove', handleMouseMove);
     }
   }, []);
 
@@ -220,7 +218,7 @@ export default function AboutUsPage() {
                 </h1>
 
                 <p className="text-xl md:text-2xl text-slate-300 mb-8 leading-relaxed">
-                  Since 2018, we've been transforming Pakistan's defense landscape through 
+                  Since 2018, we&apos;ve been transforming Pakistan&apos;s defense landscape through 
                   cutting-edge indigenous technology solutions that rival global standards.
                 </p>
 
@@ -355,7 +353,7 @@ export default function AboutUsPage() {
                 Key <span className="text-cyan-400">Achievements</span>
               </h2>
               <p className="text-xl text-slate-300 max-w-3xl mx-auto">
-                Breakthrough innovations that are reshaping Pakistan's defense technology landscape
+                Breakthrough innovations that are reshaping Pakistan&apos;s defense technology landscape
               </p>
             </div>
 
@@ -474,7 +472,7 @@ export default function AboutUsPage() {
                     </div>
                     
                     <p className="text-slate-300 text-lg leading-relaxed mb-8">
-                      To revolutionize Pakistan's defense technology landscape through indigenous innovation, 
+                      To revolutionize Pakistan&apos;s defense technology landscape through indigenous innovation, 
                       delivering world-class solutions that ensure national security while fostering 
                       technological independence and excellence.
                     </p>
@@ -645,7 +643,7 @@ export default function AboutUsPage() {
               {/* Floating Badge */}
               <div className="inline-flex items-center gap-3 px-6 py-3 bg-cyan-500/20 rounded-full border border-cyan-400/30 mb-8 backdrop-blur-sm animate-float">
                 <Sparkles className="w-5 h-5 text-cyan-400 animate-pulse" />
-                <span className="text-cyan-400 font-medium tracking-wide">LET'S COLLABORATE</span>
+                <span className="text-cyan-400 font-medium tracking-wide">LET&apos;S COLLABORATE</span>
               </div>
 
               <h2 className="text-4xl md:text-6xl font-bold text-white mb-8 leading-tight">
@@ -658,7 +656,7 @@ export default function AboutUsPage() {
               
               <p className="text-xl md:text-2xl text-slate-300 mb-12 leading-relaxed max-w-3xl mx-auto">
                 Join us in revolutionizing defense technology through indigenous innovation and excellence. 
-                Let's discuss how we can meet your specific requirements.
+                Let&apos;s discuss how we can meet your specific requirements.
               </p>
               
               {/* Interactive Buttons */}

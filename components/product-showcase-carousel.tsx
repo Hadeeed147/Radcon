@@ -254,7 +254,7 @@ const ProductShowcaseCarousel: React.FC<ProductShowcaseCarouselProps> = ({
     
     const handleResize = () => {
       clearTimeout(timeoutId)
-      timeoutId = setTimeout(() => {
+      timeoutId = setTimeout(() => {  
         const newCount = getVisibleCards()
         setVisibleCardsCount(newCount)
         // Adjust current index if needed
@@ -501,7 +501,7 @@ const ProductShowcaseCarousel: React.FC<ProductShowcaseCarouselProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [isInView, prevSlide, nextSlide, goToSlide, visibleCardsCount])
 
-  const cardWidth = useMemo(() => getCardWidth(), [getCardWidth, isHydrated])
+  const cardWidth = useMemo(() => getCardWidth(), [getCardWidth])
   
   const translateX = useMemo(() => {
     const offset = isDragging && !isVerticalScroll ? dragDelta : 0
