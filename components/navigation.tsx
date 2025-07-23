@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react"
 import Image from "next/image"
+import { useRouter } from "next/navigation"
 import { 
   Cog, 
   Cpu, 
@@ -30,7 +31,7 @@ const navItems = [
     icon: User,
     hasDropdown: true,
     dropdownItems: [
-      { name: "About Us", href: "#about" },
+      { name: "About Us", href: "/about-us" },
       { name: "Vision & Mission", href: "#vision" },
       { name: "RADCON Ethical Principles", href: "#ethics" }
     ]
@@ -158,6 +159,7 @@ const navItems = [
 ]
 
 export default function Navigation() {
+  const router = useRouter()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [activeItem, setActiveItem] = useState("Corporate")
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null)
@@ -224,10 +226,10 @@ export default function Navigation() {
     }
   }, [isMenuOpen, activeDropdown, activeMobileDropdown])
 
-  const scrollToTop = useCallback(() => {
-    window.scrollTo({ top: 0, behavior: "smooth" })
+  const goToHomepage = useCallback(() => {
+    router.push("/")
     setActiveItem("Corporate")
-  }, [])
+  }, [router])
 
   const handleNavClick = useCallback((item: string, href?: string) => {
     setActiveItem(item)
@@ -238,14 +240,19 @@ export default function Navigation() {
     setActiveMobileSubDropdown(null)
 
     if (href) {
-      const element = document.querySelector(href)
-      if (element) {
-        element.scrollIntoView({ behavior: "smooth" })
+      // Check if it's a page route (starts with /) or a hash link (starts with #)
+      if (href.startsWith("/")) {
+        router.push(href)
+      } else if (href.startsWith("#")) {
+        const element = document.querySelector(href)
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth" })
+        }
       }
     } else if (item === "Corporate") {
-      scrollToTop()
+      goToHomepage()
     }
-  }, [scrollToTop])
+  }, [router, goToHomepage])
 
   const handleDropdownEnter = useCallback((itemName: string) => {
     if (dropdownTimeoutRef.current) {
@@ -340,7 +347,7 @@ export default function Navigation() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
           <div className="flex items-center h-full relative justify-between md:justify-start">
             {/* Enhanced Logo with Actual RADCON Image */}
-            <div className="cursor-pointer group relative overflow-hidden" onClick={scrollToTop}>
+            <div className="cursor-pointer group relative overflow-hidden" onClick={goToHomepage}>
               {/* Particle effects background */}
               <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
                 {[

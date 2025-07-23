@@ -207,6 +207,7 @@ const ProductShowcaseCarousel: React.FC<ProductShowcaseCarouselProps> = ({
   const [isTouchDevice, setIsTouchDevice] = useState(false)
   const [isReducedMotion, setIsReducedMotion] = useState(false)
   const [isVerticalScroll, setIsVerticalScroll] = useState(false)
+  const [isHydrated, setIsHydrated] = useState(false)
 
   const containerRef = useRef<HTMLDivElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -215,6 +216,7 @@ const ProductShowcaseCarousel: React.FC<ProductShowcaseCarouselProps> = ({
 
   // Detect touch device and reduced motion preference
   useEffect(() => {
+    setIsHydrated(true)
     setIsTouchDevice('ontouchstart' in window || navigator.maxTouchPoints > 0)
     
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
@@ -228,16 +230,23 @@ const ProductShowcaseCarousel: React.FC<ProductShowcaseCarouselProps> = ({
 
   // Get current visible cards based on screen size
   const getVisibleCards = useCallback(() => {
-    if (typeof window === 'undefined') return visibleCards.desktop
+    if (typeof window === 'undefined' || !isHydrated) return visibleCards.desktop
 
     const width = window.innerWidth
     if (width < 640) return visibleCards.mobile
     if (width < 1024) return visibleCards.tablet  
     if (width < 1536) return visibleCards.desktop
     return visibleCards.large
-  }, [visibleCards])
+  }, [visibleCards, isHydrated])
 
   const [visibleCardsCount, setVisibleCardsCount] = useState(getVisibleCards())
+
+  // Update visible cards count after hydration
+  useEffect(() => {
+    if (isHydrated) {
+      setVisibleCardsCount(getVisibleCards())
+    }
+  }, [isHydrated, getVisibleCards])
 
   // Handle resize with debouncing
   useEffect(() => {
@@ -260,7 +269,7 @@ const ProductShowcaseCarousel: React.FC<ProductShowcaseCarouselProps> = ({
       window.removeEventListener('resize', handleResize)
       clearTimeout(timeoutId)
     }
-  }, [getVisibleCards, currentIndex])
+  }, [getVisibleCards, currentIndex, isHydrated])
 
   // Intersection Observer for entrance animations
   useEffect(() => {
@@ -332,7 +341,7 @@ const ProductShowcaseCarousel: React.FC<ProductShowcaseCarouselProps> = ({
   }, [currentIndex, autoScroll, autoScrollDelay, isInView, isDragging, isScrolling, hoveredCard, isReducedMotion, nextSlide])
 
   const getCardWidth = useCallback(() => {
-    if (typeof window === 'undefined') return 320
+    if (typeof window === 'undefined' || !isHydrated) return 320
     
     const width = window.innerWidth
     const gap = width < 640 ? 16 : 24
@@ -340,7 +349,7 @@ const ProductShowcaseCarousel: React.FC<ProductShowcaseCarouselProps> = ({
     if (width < 640) return width - 48 // Account for container padding
     if (width < 1024) return 300 + gap
     return 320 + gap
-  }, [])
+  }, [isHydrated])
 
   // Improved touch handling for mobile
   const handleStart = useCallback((clientX: number, clientY: number) => {
@@ -492,7 +501,7 @@ const ProductShowcaseCarousel: React.FC<ProductShowcaseCarouselProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [isInView, prevSlide, nextSlide, goToSlide, visibleCardsCount])
 
-  const cardWidth = useMemo(() => getCardWidth(), [getCardWidth])
+  const cardWidth = useMemo(() => getCardWidth(), [getCardWidth, isHydrated])
   
   const translateX = useMemo(() => {
     const offset = isDragging && !isVerticalScroll ? dragDelta : 0
